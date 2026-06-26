@@ -8,7 +8,6 @@ from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 from zero.providers.manager import ProviderManager
 from zero.services.config import save_config
-from zero.core.exceptions import ConfigError
 
 provider_app = typer.Typer(
     name="provider",
