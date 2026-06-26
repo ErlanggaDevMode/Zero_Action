@@ -60,7 +60,7 @@ It is **not** a simple code autocomplete. It is a combination of:
 ### Install with uv
 
 ```bash
-git clone https://github.com/your-org/zero-action.git
+git clone git@github.com:ErlanggaDevMode/Zero_Action.git
 cd zero-action
 uv sync
 ```
