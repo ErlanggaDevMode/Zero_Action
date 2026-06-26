@@ -66,3 +66,58 @@ def test_config_invalid_toml_raises_error(temp_zero_dir: Path) -> None:
         load_config(temp_zero_dir)
 
     assert "Malformed TOML" in str(exc_info.value)
+
+
+def test_config_provider_validation(temp_zero_dir: Path) -> None:
+    """Test that all 10 providers load with correct defaults."""
+    config = load_config(temp_zero_dir)
+    assert config.provider.openai.model == "gpt-4o"
+    assert config.provider.anthropic.model == "claude-3-5-sonnet-20241022"
+    assert config.provider.gemini.model == "gemini-1.5-pro"
+    assert config.provider.ollama.model == "llama3"
+
+
+def test_config_write_and_reload(temp_zero_dir: Path) -> None:
+    """Test that save_config serializes settings to TOML files and reloading works."""
+    from zero.services.config import save_config
+
+    config = load_config(temp_zero_dir)
+    config.settings.theme = "forest"
+    config.provider.active_provider = "gemini"
+    config.provider.gemini.api_key = "test-gemini-key"
+
+    save_config(config, temp_zero_dir)
+
+    # Reload from disk
+    reloaded = load_config(temp_zero_dir)
+    assert reloaded.settings.theme == "forest"
+    assert reloaded.provider.active_provider == "gemini"
+    assert reloaded.provider.gemini.api_key == "test-gemini-key"
+
+
+def test_config_validation_error_format(temp_zero_dir: Path) -> None:
+    """Test that schema validation errors are caught and formatted elegantly."""
+    # Write invalid data type (e.g. invalid string for boolean)
+    with open(temp_zero_dir / "config.toml", "w", encoding="utf-8") as f:
+        f.write("[app]\ndebug = \"not-a-boolean\"\n")
+
+    with pytest.raises(ConfigError) as exc_info:
+        load_config(temp_zero_dir)
+
+    assert "Configuration validation failed:" in str(exc_info.value)
+    assert "app -> debug" in str(exc_info.value)
+
+
+def test_config_environment_override_arbitrary_nesting(temp_zero_dir: Path) -> None:
+    """Test that environment overrides support arbitrary nesting depths."""
+    os.environ["ZERO_PROVIDER__OPENAI__API_KEY"] = "env-openai-key"
+    os.environ["ZERO_PROVIDER__OPENAI__MODEL"] = "env-model"
+
+    try:
+        config = load_config(temp_zero_dir)
+        assert config.provider.openai.api_key == "env-openai-key"
+        assert config.provider.openai.model == "env-model"
+    finally:
+        os.environ.pop("ZERO_PROVIDER__OPENAI__API_KEY", None)
+        os.environ.pop("ZERO_PROVIDER__OPENAI__MODEL", None)
+

@@ -11,6 +11,19 @@ from zero.services.config import load_config
 from zero.services.logging import setup_logging
 from zero.cli.commands.verify import verify
 from zero.cli.commands.version import version
+from zero.cli.commands.config import config_app
+from zero.cli.commands.setup import setup
+from zero.cli.commands.init import init
+from zero.cli.commands.memory import memory_app
+from zero.cli.commands.ask import ask
+from zero.cli.commands.chat import chat
+from zero.cli.commands.provider import provider_app
+from zero.cli.commands.plan import plan
+from zero.cli.commands.architect import architect
+from zero.cli.commands.code import code
+from zero.cli.commands.review import review
+from zero.cli.commands.fix import fix
+
 
 app = typer.Typer(
     name="zero",
@@ -62,3 +75,16 @@ def main(
 # Register subcommands from commands package
 app.command("verify")(verify)
 app.command("version")(version)
+app.command("setup")(setup)
+app.command("init")(init)
+app.command("ask")(ask)
+app.command("chat")(chat)
+app.command("plan")(plan)
+app.command("architect")(architect)
+app.command("code")(code)
+app.command("review")(review)
+app.command("fix")(fix)
+app.add_typer(config_app)
+app.add_typer(memory_app)
+app.add_typer(provider_app)
+
