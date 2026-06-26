@@ -20,6 +20,8 @@ from zero.cli.commands.chat import chat
 from zero.cli.commands.provider import provider_app
 from zero.cli.commands.plan import plan
 from zero.cli.commands.architect import architect
+from zero.cli.commands.code import code
+
 
 app = typer.Typer(
     name="zero",
@@ -77,6 +79,8 @@ app.command("ask")(ask)
 app.command("chat")(chat)
 app.command("plan")(plan)
 app.command("architect")(architect)
+app.command("code")(code)
 app.add_typer(config_app)
 app.add_typer(memory_app)
 app.add_typer(provider_app)
+
