@@ -11,6 +11,7 @@ from zero.services.config import load_config
 from zero.services.logging import setup_logging
 from zero.cli.commands.verify import verify
 from zero.cli.commands.version import version
+from zero.cli.commands.config import config_app
 
 app = typer.Typer(
     name="zero",
@@ -62,3 +63,4 @@ def main(
 # Register subcommands from commands package
 app.command("verify")(verify)
 app.command("version")(version)
+app.add_typer(config_app)
