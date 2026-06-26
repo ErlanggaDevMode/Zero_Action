@@ -14,6 +14,7 @@ from zero.cli.commands.version import version
 from zero.cli.commands.config import config_app
 from zero.cli.commands.setup import setup
 from zero.cli.commands.init import init
+from zero.cli.commands.memory import memory_app
 
 app = typer.Typer(
     name="zero",
@@ -68,3 +69,4 @@ app.command("version")(version)
 app.command("setup")(setup)
 app.command("init")(init)
 app.add_typer(config_app)
+app.add_typer(memory_app)
