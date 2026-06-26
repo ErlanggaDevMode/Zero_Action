@@ -15,6 +15,8 @@ from zero.cli.commands.config import config_app
 from zero.cli.commands.setup import setup
 from zero.cli.commands.init import init
 from zero.cli.commands.memory import memory_app
+from zero.cli.commands.ask import ask
+from zero.cli.commands.chat import chat
 
 app = typer.Typer(
     name="zero",
@@ -68,5 +70,7 @@ app.command("verify")(verify)
 app.command("version")(version)
 app.command("setup")(setup)
 app.command("init")(init)
+app.command("ask")(ask)
+app.command("chat")(chat)
 app.add_typer(config_app)
 app.add_typer(memory_app)
