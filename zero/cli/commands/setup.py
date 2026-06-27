@@ -1,11 +1,11 @@
-"""CLI subcommand to guide the user through interactive provider setup."""
-
+import sys
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from zero.providers.manager import ProviderManager
 from zero.services.config import save_config
+
 
 
 def setup(ctx: typer.Context) -> None:
@@ -56,15 +56,19 @@ def setup(ctx: typer.Context) -> None:
     api_key = None
     if provider_name != "ollama":
         current_key = provider_defaults.api_key
+        is_tty = sys.stdin.isatty()
+        prompt_suffix = "input will be hidden for security" if is_tty else "input is visible"
         if current_key:
             api_key = Prompt.ask(
-                "Enter API Key (press Enter to keep existing)",
-                password=True,
+                f"Enter API Key ({prompt_suffix}, press Enter to keep existing)",
+                password=is_tty,
                 default=current_key,
                 show_default=False,
             )
         else:
-            api_key = Prompt.ask("Enter API Key", password=True, default="")
+            api_key = Prompt.ask(f"Enter API Key ({prompt_suffix})", password=is_tty, default="")
+
+
             
         if api_key == "":
             api_key = None

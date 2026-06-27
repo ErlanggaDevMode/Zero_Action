@@ -1,5 +1,4 @@
-"""CLI commands to manage and configure multiple AI provider connection settings."""
-
+import sys
 from typing import Optional
 import typer
 from rich.console import Console
@@ -8,6 +7,7 @@ from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 from zero.providers.manager import ProviderManager
 from zero.services.config import save_config
+
 
 provider_app = typer.Typer(
     name="provider",
@@ -95,15 +95,19 @@ def add_provider(
     api_key = None
     if provider_name != "ollama":
         current_key = provider_defaults.api_key
+        is_tty = sys.stdin.isatty()
+        prompt_suffix = "input will be hidden for security" if is_tty else "input is visible"
         if current_key:
             api_key = Prompt.ask(
-                f"Enter API Key for {provider_name} (press Enter to keep existing)",
-                password=True,
+                f"Enter API Key for {provider_name} ({prompt_suffix}, press Enter to keep existing)",
+                password=is_tty,
                 default=current_key,
                 show_default=False,
             )
         else:
-            api_key = Prompt.ask(f"Enter API Key for {provider_name}", password=True, default="")
+            api_key = Prompt.ask(f"Enter API Key for {provider_name} ({prompt_suffix})", password=is_tty, default="")
+
+
             
         if api_key == "":
             api_key = None
