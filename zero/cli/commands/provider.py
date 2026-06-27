@@ -95,17 +95,15 @@ def add_provider(
     api_key = None
     if provider_name != "ollama":
         current_key = provider_defaults.api_key
-        is_tty = sys.stdin.isatty()
-        prompt_suffix = "input will be hidden for security" if is_tty else "input is visible"
         if current_key:
             api_key = Prompt.ask(
-                f"Enter API Key for {provider_name} ({prompt_suffix}, press Enter to keep existing)",
-                password=is_tty,
+                f"Enter API Key for {provider_name} (press Enter to keep existing)",
                 default=current_key,
                 show_default=False,
             )
         else:
-            api_key = Prompt.ask(f"Enter API Key for {provider_name} ({prompt_suffix})", password=is_tty, default="")
+            api_key = Prompt.ask(f"Enter API Key for {provider_name}", default="")
+
 
 
             

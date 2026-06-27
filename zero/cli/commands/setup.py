@@ -56,17 +56,14 @@ def setup(ctx: typer.Context) -> None:
     api_key = None
     if provider_name != "ollama":
         current_key = provider_defaults.api_key
-        is_tty = sys.stdin.isatty()
-        prompt_suffix = "input will be hidden for security" if is_tty else "input is visible"
         if current_key:
             api_key = Prompt.ask(
-                f"Enter API Key ({prompt_suffix}, press Enter to keep existing)",
-                password=is_tty,
+                "Enter API Key (press Enter to keep existing)",
                 default=current_key,
                 show_default=False,
             )
         else:
-            api_key = Prompt.ask(f"Enter API Key ({prompt_suffix})", password=is_tty, default="")
+            api_key = Prompt.ask("Enter API Key", default="")
 
 
             
