@@ -1,13 +1,12 @@
-"""CLI commands to manage and configure multiple AI provider connection settings."""
-
 from typing import Optional
 import typer
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
-from zero.providers.manager import ProviderManager
-from zero.services.config import save_config
+
+
+
 
 provider_app = typer.Typer(
     name="provider",
@@ -79,8 +78,11 @@ def add_provider(
     provider_name: str = typer.Argument(..., help="Name of the provider to configure (e.g. openai, gemini)")
 ) -> None:
     """Configure a specific AI provider settings."""
+    from zero.providers.manager import ProviderManager
+    from zero.services.config import save_config
     console = Console()
     settings = ctx.obj.settings
+
     config_dir = ctx.obj.config_dir
     
     provider_name = provider_name.lower()
@@ -98,12 +100,14 @@ def add_provider(
         if current_key:
             api_key = Prompt.ask(
                 f"Enter API Key for {provider_name} (press Enter to keep existing)",
-                password=True,
                 default=current_key,
                 show_default=False,
             )
         else:
-            api_key = Prompt.ask(f"Enter API Key for {provider_name}", password=True, default="")
+            api_key = Prompt.ask(f"Enter API Key for {provider_name}", default="")
+
+
+
             
         if api_key == "":
             api_key = None
@@ -148,9 +152,11 @@ def remove_provider(
     provider_name: str = typer.Argument(..., help="Name of the provider to remove configuration from")
 ) -> None:
     """Clear configuration details for a specific provider."""
+    from zero.services.config import save_config
     console = Console()
     settings = ctx.obj.settings
     config_dir = ctx.obj.config_dir
+
     
     provider_name = provider_name.lower()
     if provider_name not in SUPPORTED_PROVIDERS:
@@ -177,9 +183,11 @@ def switch_provider(
     provider_name: str = typer.Argument(..., help="Name of the provider to set as active")
 ) -> None:
     """Switch active AI provider configuration."""
+    from zero.services.config import save_config
     console = Console()
     settings = ctx.obj.settings
     config_dir = ctx.obj.config_dir
+
     
     provider_name = provider_name.lower()
     if provider_name not in SUPPORTED_PROVIDERS:
@@ -201,8 +209,10 @@ def list_models(
     provider_name: Optional[str] = typer.Argument(None, help="Name of the provider to list models for (defaults to active provider)")
 ) -> None:
     """Display supported models list for a provider."""
+    from zero.providers.manager import ProviderManager
     console = Console()
     settings = ctx.obj.settings
+
     
     p_name = provider_name or settings.provider.active_provider
     if not p_name:
@@ -227,8 +237,10 @@ def test_provider(
     provider_name: Optional[str] = typer.Argument(None, help="Name of the provider to test (defaults to active provider)")
 ) -> None:
     """Run connection health check test for a provider."""
+    from zero.providers.manager import ProviderManager
     console = Console()
     settings = ctx.obj.settings
+
     
     p_name = provider_name or settings.provider.active_provider
     if not p_name:

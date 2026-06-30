@@ -2,16 +2,18 @@
 
 import asyncio
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
-from rich.live import Live
-from rich.markdown import Markdown
-from zero.services.ai import AIService
-from zero.core.exceptions import ConfigError
+from zero.core.ui import stream_completion_with_timer
 from zero.services.logging import logger
+
+if TYPE_CHECKING:
+    from zero.services.ai import AIService
+
+
 
 _VALID_FOCUS_AREAS = {
     "security",
@@ -24,15 +26,6 @@ _VALID_FOCUS_AREAS = {
 _DEFAULT_FOCUS = "security,performance,maintainability,scalability,readability"
 
 
-async def stream_review_response(provider, messages, console: Console) -> str:
-    """Stream reviewer response and return the full content."""
-    response_text = ""
-    with Live(Markdown(response_text), console=console, auto_refresh=False) as live:
-        async for chunk in provider.stream(messages):
-            response_text += chunk
-            live.update(Markdown(response_text), refresh=True)
-    console.print()
-    return response_text
 
 
 def _build_messages(
@@ -93,6 +86,8 @@ def review(
     ),
 ) -> None:
     """Perform an AI-powered code review on a file or directory of source files."""
+    from zero.services.ai import AIService
+    from zero.core.exceptions import ConfigError
     console = Console()
     cli_context = ctx.obj
     settings = cli_context.settings
@@ -204,7 +199,7 @@ def review(
         messages = _build_messages(ai_service, reviewer_instructions, target_file, file_content, focus_areas)
 
         try:
-            review_text = asyncio.run(stream_review_response(provider, messages, console))
+            review_text = asyncio.run(stream_completion_with_timer(provider, messages, console))
             all_reviews.append(review_text)
         except Exception as e:
             logger.bind(category="cli").error(f"Error during streaming review for {target_file}: {e}")

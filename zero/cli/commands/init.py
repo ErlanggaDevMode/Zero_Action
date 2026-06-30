@@ -7,7 +7,6 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from zero.repository.analyzer import analyze_repository
 from zero.services.logging import logger
 
 def format_size(size_bytes: int) -> str:
@@ -21,8 +20,10 @@ def format_size(size_bytes: int) -> str:
 
 def init(ctx: typer.Context) -> None:
     """Scan the current working directory, display a summary, and cache repository context."""
+    from zero.repository.analyzer import analyze_repository
     console = Console()
     cli_context = ctx.obj
+
     config_dir = cli_context.config_dir
     repo_path = Path.cwd()
 

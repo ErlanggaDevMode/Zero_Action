@@ -60,16 +60,16 @@ model = "gpt-4"
     
     mock_acompletion.side_effect = mock_async_stream
     
-    # 2. Mock terminal interaction loop (input "hello" then "exit")
-    inputs = "hello\nexit\n"
+    # 2. Mock terminal interaction loop (input Enter on welcome screen, then "hello" then "/exit")
+    inputs = "\nhello\n/exit\n"
     
     result = runner.invoke(app, ["chat"], input=inputs)
     
     assert result.exit_code == 0
-    assert "Zero Action Chat" in result.stdout
-    assert "Session:" in result.stdout
+    assert "Zero Action Chat Console" in result.stdout
+    assert "Session ID:" in result.stdout
     assert "Mock AI response" in result.stdout
-    assert "Chat session closed. Goodbye!" in result.stdout
+    assert "Chat REPL session closed. Goodbye!" in result.stdout
     
     # 3. Verify conversation was saved in SQLite memory database
     db_path = temp_zero_dir / "memory.db"
@@ -85,3 +85,27 @@ model = "gpt-4"
     assert messages[0]["content"] == "hello"
     assert messages[1]["role"] == "assistant"
     assert messages[1]["content"] == "Mock AI response"
+
+@patch("litellm.acompletion")
+def test_chat_command_slash_help_and_exit(mock_acompletion, temp_zero_dir) -> None:
+    # Setup active provider
+    providers_toml = temp_zero_dir / "providers.toml"
+    providers_toml.write_text("""
+[provider]
+active_provider = "openai"
+[provider.openai]
+api_key = "sk-test"
+base_url = "https://api.openai.com/v1"
+model = "gpt-4"
+""")
+    
+    inputs = "\n/help\n/exit\n"
+    result = runner.invoke(app, ["chat"], input=inputs)
+    
+    assert result.exit_code == 0
+    assert "Zero Action CLI REPL Help" in result.stdout
+    assert "/plan" in result.stdout
+    assert "/code" in result.stdout
+    assert "/review" in result.stdout
+    assert "/fix" in result.stdout
+    assert "Chat REPL session closed. Goodbye!" in result.stdout

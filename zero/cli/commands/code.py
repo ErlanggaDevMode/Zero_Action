@@ -7,21 +7,10 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
-from rich.live import Live
-from rich.markdown import Markdown
-from zero.services.ai import AIService
-from zero.core.exceptions import ConfigError
 from zero.services.logging import logger
+from zero.core.ui import stream_completion_with_timer
 
-async def stream_code_response(provider, messages, console: Console) -> str:
-    """Stream coder response and return the full content."""
-    response_text = ""
-    with Live(Markdown(response_text), console=console, auto_refresh=False) as live:
-        async for chunk in provider.stream(messages):
-            response_text += chunk
-            live.update(Markdown(response_text), refresh=True)
-    console.print()
-    return response_text
+
 
 def parse_coder_response(response_text: str) -> tuple[str | None, str]:
     """Parse the file path and code content from the AI response."""
@@ -67,6 +56,8 @@ def code(
     spec: Path = typer.Option(None, "--spec", "-s", help="Path to specification file to load context from")
 ) -> None:
     """Generate or update project source files using AI and workspace context."""
+    from zero.services.ai import AIService
+    from zero.core.exceptions import ConfigError
     console = Console()
     cli_context = ctx.obj
     settings = cli_context.settings
@@ -168,7 +159,7 @@ def code(
 
     # 5. Get LLM response
     try:
-        response_text = asyncio.run(stream_code_response(provider, messages, console))
+        response_text = asyncio.run(stream_completion_with_timer(provider, messages, console))
     except Exception as e:
         logger.bind(category="cli").error(f"Error during streaming code completion: {e}")
         console.print(f"\n[bold red]API Completion Error:[/bold red] {e}")
