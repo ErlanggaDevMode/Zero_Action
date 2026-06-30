@@ -9,11 +9,11 @@ import typer
 
 
 from rich.console import Console
-from rich.live import Live
-from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
+from rich.text import Text
+
 
 from zero.services.ai import AIService
 from zero.memory.manager import MemoryManager
@@ -24,15 +24,8 @@ from zero.services.logging import logger
 
 
 
-async def stream_chat_response(provider, messages, console: Console) -> str:
-    """Stream chat completion response and return the full content."""
-    response_text = ""
-    with Live(Markdown(response_text), console=console, auto_refresh=False) as live:
-        async for chunk in provider.stream(messages):
-            response_text += chunk
-            live.update(Markdown(response_text), refresh=True)
-    console.print()
-    return response_text
+from zero.core.ui import stream_completion_with_timer
+
 
 
 def parse_slash_args(cmd_args: str) -> tuple[dict[str, str], str]:
@@ -339,6 +332,38 @@ def chat(ctx: typer.Context) -> None:
     active_model = provider_defaults.model if provider_defaults else "none"
     cwd_name = Path.cwd().name
 
+    # Render premium startup welcome screen matching Claude Code CLI layout
+    welcome_panel = Panel(
+        Text(" Welcome To The Zero Action ", style="bold #FFD700"),
+        border_style="#FFD700",
+        expand=False,
+    )
+    console.print(welcome_panel)
+
+    logo = """
+[#DC143C]████████  ████████  ████████  ████████[/#DC143C]
+[#DC143C]    ██/   ██        ██    ██  ██    ██[/#DC143C]
+[#DC143C]   ██/    ██████    ████████  ██    ██[/#DC143C]
+[#DC143C]  ██/     ██        ██   ██   ██    ██[/#DC143C]
+[#DC143C]████████  ████████  ██    ██  ████████[/#DC143C]
+
+[#0047AB]████████  ████████  ████████  ████████  ████████  ███    ██[/#0047AB]
+[#0047AB]██    ██  ██           ██        ██     ██    ██  ████   ██[/#0047AB]
+[#0047AB]████████  ██           ██        ██     ██    ██  ██ ██  ██[/#0047AB]
+[#0047AB]██    ██  ██           ██        ██     ██    ██  ██  ██ ██[/#0047AB]
+[#0047AB]██    ██  ████████     ██     ████████  ████████  ██   ████[/#0047AB]
+"""
+    console.print(logo)
+
+    try:
+        Prompt.ask("\n🎉 [bold #5fafff]Connection successful. Press[/bold #5fafff] [bold white]Enter[/bold white] [bold #5fafff]to continue[/bold #5fafff]", default="", show_default=False)
+    except (KeyboardInterrupt, EOFError, typer.Abort):
+        console.print("\n[yellow]REPL session terminated.[/yellow]")
+        raise typer.Exit()
+
+    # Clear console screen for interactive prompt
+    console.clear()
+
     console.print(
         Panel(
             f"Active Provider: [bold cyan]{active_provider}[/bold cyan] | "
@@ -351,6 +376,7 @@ def chat(ctx: typer.Context) -> None:
             border_style="green",
         )
     )
+
 
     while True:
         try:
@@ -399,7 +425,8 @@ def chat(ctx: typer.Context) -> None:
         console.print("\n[bold green]Zero Action Assistant:[/bold green]")
 
         try:
-            assistant_response = asyncio.run(stream_chat_response(provider, api_messages, console))
+            assistant_response = asyncio.run(stream_completion_with_timer(provider, api_messages, console))
+
         except Exception as e:
             logger.bind(category="cli").error(f"Error during streaming chat completion: {e}")
             console.print(f"\n[bold red]API Completion Error:[/bold red] {e}")

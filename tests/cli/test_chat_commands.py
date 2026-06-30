@@ -60,8 +60,8 @@ model = "gpt-4"
     
     mock_acompletion.side_effect = mock_async_stream
     
-    # 2. Mock terminal interaction loop (input "hello" then "/exit")
-    inputs = "hello\n/exit\n"
+    # 2. Mock terminal interaction loop (input Enter on welcome screen, then "hello" then "/exit")
+    inputs = "\nhello\n/exit\n"
     
     result = runner.invoke(app, ["chat"], input=inputs)
     
@@ -99,7 +99,7 @@ base_url = "https://api.openai.com/v1"
 model = "gpt-4"
 """)
     
-    inputs = "/help\n/exit\n"
+    inputs = "\n/help\n/exit\n"
     result = runner.invoke(app, ["chat"], input=inputs)
     
     assert result.exit_code == 0

@@ -6,28 +6,18 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
-from rich.live import Live
-from rich.markdown import Markdown
-from zero.services.ai import AIService
-from zero.core.exceptions import ConfigError
 from zero.services.logging import logger
-
-async def stream_architect_response(provider, messages, console: Console) -> str:
-    """Stream architect response and return the full content."""
-    response_text = ""
-    with Live(Markdown(response_text), console=console, auto_refresh=False) as live:
-        async for chunk in provider.stream(messages):
-            response_text += chunk
-            live.update(Markdown(response_text), refresh=True)
-    console.print()
-    return response_text
+from zero.core.ui import stream_completion_with_timer
 
 def architect(
     ctx: typer.Context,
     requirements: str = typer.Option(None, "--requirements", "-r", help="Text description of the feature or architectural goals"),
+
     output: Path = typer.Option(Path("docs/architecture.md"), "--output", "-o", help="Target filepath to write the generated architecture design")
 ) -> None:
     """Generate a system architecture design document using AI and workspace context."""
+    from zero.services.ai import AIService
+    from zero.core.exceptions import ConfigError
     console = Console()
     cli_context = ctx.obj
     settings = cli_context.settings
@@ -83,10 +73,10 @@ def architect(
 
     console.print(f"\n[bold green]Zero Action Architect[/bold green] [dim]({provider.model})[/dim]")
     console.print("Generating Architecture Design Document...\n")
-
     try:
-        arch_content = asyncio.run(stream_architect_response(provider, messages, console))
+        arch_content = asyncio.run(stream_completion_with_timer(provider, messages, console))
     except Exception as e:
+
         logger.bind(category="cli").error(f"Error during streaming architecture completion: {e}")
         console.print(f"\n[bold red]API Completion Error:[/bold red] {e}")
         raise typer.Exit(code=1)

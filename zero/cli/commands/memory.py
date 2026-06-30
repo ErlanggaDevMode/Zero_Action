@@ -1,12 +1,17 @@
 """CLI commands for managing conversation memory, ADRs, and knowledge import."""
 
+from typing import TYPE_CHECKING
 import uuid
 from pathlib import Path
 import typer
 from rich.console import Console
+
+if TYPE_CHECKING:
+    from zero.memory.manager import MemoryManager
+
+
 from rich.table import Table
 from rich.panel import Panel
-from zero.memory.manager import MemoryManager
 from zero.services.logging import logger
 
 memory_app = typer.Typer(
@@ -16,12 +21,14 @@ memory_app = typer.Typer(
     no_args_is_help=True,
 )
 
-def get_memory_manager(ctx: typer.Context) -> MemoryManager:
+def get_memory_manager(ctx: typer.Context) -> "MemoryManager":
     """Helper to initialize and return MemoryManager from context config directory."""
+    from zero.memory.manager import MemoryManager
     cli_context = ctx.obj
     config_dir = cli_context.config_dir
     db_path = config_dir / "memory.db"
     return MemoryManager(db_path)
+
 
 @memory_app.command("list-sessions")
 def list_sessions(ctx: typer.Context) -> None:
