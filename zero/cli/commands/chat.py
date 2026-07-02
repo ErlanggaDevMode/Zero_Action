@@ -64,6 +64,24 @@ def parse_slash_args(cmd_args: str) -> tuple[dict[str, str], str]:
         elif part == "--focus" and i + 1 < len(parts):
             opts["focus"] = parts[i + 1]
             i += 2
+        elif part in ("-c", "--command") and i + 1 < len(parts):
+            opts["command"] = parts[i + 1]
+            i += 2
+        elif part in ("-m", "--max-iterations") and i + 1 < len(parts):
+            opts["max_iterations"] = parts[i + 1]
+            i += 2
+        elif part in ("-y", "--yes"):
+            opts["yes"] = "true"
+            i += 1
+        elif part in ("-b", "--branch") and i + 1 < len(parts):
+            opts["branch"] = parts[i + 1]
+            i += 2
+        elif part in ("-t", "--title") and i + 1 < len(parts):
+            opts["title"] = parts[i + 1]
+            i += 2
+        elif part == "--body" and i + 1 < len(parts):
+            opts["body"] = parts[i + 1]
+            i += 2
         else:
             req_parts.append(part)
             i += 1
@@ -100,6 +118,8 @@ def show_repl_help(console: Console) -> None:
         "/memory [subcommand]",
         "Manage saved conversations, ADR decisions, and knowledge base",
     )
+    table.add_row("/test [command]", "Run tests or checks and trigger autonomous self-healing")
+    table.add_row("/pr", "Automate Git conventional commits, pushing, and Pull Requests")
     table.add_row("/config [show/set]", "Display or assign app configurations dynamically")
     table.add_row("/exit / /quit", "Quit the interactive loop")
 
@@ -274,6 +294,27 @@ def handle_slash_command(user_input: str, ctx: typer.Context, console: Console) 
 
             fix(ctx, file=cast(Any, fix_file_val), error=err_val, review_report=cast(Any, review_val), instruction=instr_val, output=cast(Any, fix_out_path))
 
+        elif cmd == "/test":
+            from zero.cli.commands.test import test
+            opts, reqs = parse_slash_args(cmd_args)
+            test_cmd = opts.get("command") or reqs or "pytest"
+            try:
+                max_iters = int(opts.get("max_iterations") or 3)
+            except ValueError:
+                max_iters = 3
+            file_val = Path(opts["file"]) if "file" in opts else None
+            yes_val = opts.get("yes") == "true"
+            test(ctx, command=test_cmd, max_iterations=max_iters, file=file_val, yes=yes_val)
+
+        elif cmd == "/pr":
+            from zero.cli.commands.pr import pr
+            opts, reqs = parse_slash_args(cmd_args)
+            branch_val = opts.get("branch")
+            title_val = opts.get("title")
+            body_val = opts.get("body")
+            yes_val = opts.get("yes") == "true"
+            pr(ctx, branch=branch_val, title=title_val, body=body_val, yes=yes_val, push=True)
+
         elif cmd == "/memory":
             handle_memory_command(parts, cmd_args, ctx, console)
 
@@ -416,7 +457,7 @@ def chat(ctx: typer.Context) -> None:
             logger.bind(category="cli").error(f"Failed to save user message: {e}")
 
         history = memory.sessions.get_messages(session_id)
-        system_prompt = ai_service.get_system_prompt(Path.cwd())
+        system_prompt = ai_service.get_system_prompt(Path.cwd(), query=user_input)
 
         api_messages = [{"role": "system", "content": system_prompt}]
         for msg in history:

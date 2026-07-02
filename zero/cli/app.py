@@ -23,6 +23,8 @@ from zero.cli.commands.architect import architect
 from zero.cli.commands.code import code
 from zero.cli.commands.review import review
 from zero.cli.commands.fix import fix
+from zero.cli.commands.test import test
+from zero.cli.commands.pr import pr
 
 
 app = typer.Typer(
@@ -84,6 +86,8 @@ app.command("architect")(architect)
 app.command("code")(code)
 app.command("review")(review)
 app.command("fix")(fix)
+app.command("test")(test)
+app.command("pr")(pr)
 app.add_typer(config_app)
 app.add_typer(memory_app)
 app.add_typer(provider_app)

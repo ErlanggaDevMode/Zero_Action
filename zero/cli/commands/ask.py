@@ -31,7 +31,7 @@ def ask(
         console.print(f"[bold red]Error resolving AI provider:[/bold red] {e}")
         raise typer.Exit(code=1)
 
-    system_prompt = ai_service.get_system_prompt(Path.cwd())
+    system_prompt = ai_service.get_system_prompt(Path.cwd(), query=question)
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": question}

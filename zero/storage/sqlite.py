@@ -3,6 +3,29 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from zero.services.logging import logger
 
+def calculate_cosine_similarity(a_bytes: bytes, b_bytes: bytes) -> float:
+    import struct
+    import math
+    if not a_bytes or not b_bytes:
+        return 0.0
+    
+    len_a = len(a_bytes) // 4
+    len_b = len(b_bytes) // 4
+    if len_a != len_b or len_a == 0:
+        return 0.0
+        
+    a = struct.unpack(f"{len_a}f", a_bytes)
+    b = struct.unpack(f"{len_b}f", b_bytes)
+    
+    dot_product = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(y * y for y in b))
+    
+    if norm_a == 0.0 or norm_b == 0.0:
+        return 0.0
+        
+    return dot_product / (norm_a * norm_b)
+
 class SQLiteDatabase:
     """Manages SQLite database connections and execution of schema migrations."""
     
@@ -15,6 +38,7 @@ class SQLiteDatabase:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON;")
+        conn.create_function("cosine_similarity", 2, calculate_cosine_similarity)
         return conn
 
     def _initialize_db(self) -> None:
@@ -72,6 +96,16 @@ class SQLiteDatabase:
             CREATE TABLE IF NOT EXISTS global_store (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
+            );
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS file_chunks (
+                id TEXT PRIMARY KEY,
+                file_path TEXT NOT NULL,
+                chunk_index INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                embedding BLOB NOT NULL,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             """
         ]
