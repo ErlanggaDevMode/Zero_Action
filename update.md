@@ -109,7 +109,7 @@ Berkas ini mendokumentasikan rekomendasi fitur tingkat lanjut (advanced features
 - **Cara Kerja:** Menggunakan pustaka analisis kompleksitas statis dan LLM untuk memetakan technical debt yang patut dicicil.
 
 ### 21. Dependency Vulnerability Scanner (`zero review --vulnerabilities`)
-- **Deskripsi:** Pemindai kerentanan keamanan otomatis pada dependency yang terdaftar di `requirements.txt` atau `pyproject.toml`.
+- **Deskripsi:** Pemindai kerentanan keamanan otomatis pada dependency yang terdaftar di `requirements.txt` or `pyproject.toml`.
 - **Cara Kerja:** Mencocokkan versi paket dengan database kerentanan keamanan CVE publik dan otomatis mengajukan PR pembaruan versi paket yang aman.
 
 ### 22. Shared Team Knowledge Cloud Sync (`zero memory sync`)
@@ -194,3 +194,57 @@ Berkas ini mendokumentasikan rekomendasi fitur tingkat lanjut (advanced features
 
 ### 41. Remote SSH Dev Auto-Fixer
 - **Deskripsi:** Menghubungkan Zero Action ke server pengembangan jarak jauh via SSH untuk menganalisis error logs dan menerapkan perbaikan kode secara remote dengan aman.
+
+---
+
+## 🎨 Set 7: UI/UX & Integrasi Editor Pintar
+
+### 42. Language Server Protocol (LSP) Daemon Mode
+- **Deskripsi:** Menjalankan Zero Action di latar belakang sebagai server LSP.
+- **Manfaat:** Memberikan integrasi autocomplete cerdas, visualisasi arsitektur, dan penjelasan kode secara real-time langsung di editor favoritmu (seperti VS Code, Neovim, atau Cursor) menggunakan memori project SQLite.
+
+### 43. Shortcut & Hotkey Manager (`zero shortcut`)
+- **Deskripsi:** CLI wizard untuk menetapkan pintasan tombol keyboard (hotkeys) atau alias khusus terminal untuk mempercepat rantai kerja pemrograman (misal: mengikat `/t` untuk `zero test --pipeline`).
+
+### 44. Auto-Generated README & CHANGELOG (`zero release`)
+- **Deskripsi:** AI secara otomatis memindai riwayat commit Git dan Pull Request terakhir, mengklasifikasikan perubahan berdasarkan tingkat dampaknya (Breaking, Minor, Patch), dan menulis pembaruan rilis langsung ke `CHANGELOG.md` dan `README.md`.
+
+### 45. Multi-Model API Rate-Limit Safe Queue
+- **Deskripsi:** Mekanisme antrean pengiriman token untuk mendeteksi dan mencegah terjadinya batas panggilan API (`429 Too Many Requests`). CLI akan secara otonom mengatur jeda pemanggilan LLM pada operasi skala besar.
+
+### 46. Visual UI/UX Design Auditor via Multimodal Vision (`zero review --vision`)
+- **Deskripsi:** AI asisten mengambil screenshot dari simulator web atau aplikasi mobile yang sedang berjalan lokal, lalu melakukan audit desain (kesejajaran elemen, kontras warna, accessibility, layout) dan menyarankan perbaikan kode CSS.
+
+---
+
+## 💡 Set 8: Manajemen Project & Data Mocking
+
+### 47. DB Seed Data Auto-Generator (`zero db seed`)
+- **Deskripsi:** Membuat jutaan baris data tiruan (mock seed data) yang realistis berdasarkan skema database (SQLAlchemy models) saat ini untuk keperluan pengujian performa query.
+
+### 48. Semantic Code Compare (`zero memory compare <BRANCH>`)
+- **Deskripsi:** Membandingkan perbedaan logika arsitektur antara dua cabang Git (branches) secara penjelasan semantik bahasa manusia daripada hanya membandingkan baris kode mentah (`git diff`).
+
+### 49. Docker Image Optimizer (`zero docker optimize`)
+- **Deskripsi:** AI menganalisis berkas Dockerfile milikmu, menyarankan penggunaan multi-stage build, memangkas dependencies runtime, dan mengecilkan ukuran image container untuk rilis produksi yang super cepat.
+
+### 50. Dev Container Config Auto-Gen (`zero devcontainer`)
+- **Deskripsi:** Otomatis mendeteksi Tech Stack project dan merancang file konfigurasi `.devcontainer/devcontainer.json` lengkap agar developer baru dapat memuat workspace kontainer langsung di VS Code.
+
+### 51. RAG Vector DB Backup & Share (`zero memory backup`)
+- **Deskripsi:** Mengekspor dan mengimpor file Vector Index semantik SQLite dalam satu file zip yang ringkas untuk dibagikan secara mudah ke anggota tim lain.
+
+### 52. Custom Prompt Pipeline Builder (`zero flow`)
+- **Deskripsi:** Merancang alur pipeline instruksi LLM berantai di mana hasil keluaran dari satu model AI menjadi masukan filter untuk model AI berikutnya (misal: logic planner -> coder -> linter parser).
+
+### 53. Git Branch Auto-Pruner (`zero pr --prune`)
+- **Deskripsi:** Memindai repositori lokal, mencocokkannya dengan status origin remote, dan otomatis menghapus cabang Git lokal yang sudah berstatus merged (clean workspace).
+
+### 54. Developer Productivity Dashboard
+- **Deskripsi:** Panel statistik personal yang menunjukkan seberapa banyak jam kerja yang dihemat, jumlah baris kode yang sukses direfaktorisasi, dan total bug/tes yang sukses diperbaiki asisten otonom.
+
+### 55. AI Git Commit Linter
+- **Deskripsi:** Memvalidasi pesan commit lokal agar selalu mengikuti aturan Conventional Commits dan otomatis memperbaiki deskripsinya sebelum perubahan di-commit.
+
+### 56. Remote Server Telemetry Monitor (`zero telemetry`)
+- **Deskripsi:** AI memantau penggunaan RAM, CPU, dan log error server produksi secara langsung, mendeteksi lonjakan anomali, dan memberikan saran perbaikan source code yang menjadi bottleneck performa.
