@@ -107,6 +107,8 @@ Zero Action supports the full software development lifecycle natively in the ter
 ### Interaction
 - **`zero ask`**: One-shot Q&A command. Useful for quick questions like `zero ask "Where is the database connection string?"`.
 - **`zero chat`**: An interactive REPL loop (Claude Code style). Features slash commands, streaming UI, and conversational history.
+- **`zero search`**: Perform a web search using DuckDuckGo HTML and display formatted results.
+- **`zero read`**: Fetch webpage HTML, strip styling and tags, and print the readable text context.
 
 ### The Agentic Workflow
 - **`zero plan`**: The "Product Manager". Takes a raw idea (`--requirements`) and generates a structured Product Requirements Document (PRD).
@@ -158,6 +160,12 @@ If your test suite or linter checks are failing:
 When you have finished adding a feature or fixing a bug:
 1. Run `zero pr` (or run `/pr` inside REPL).
 2. Zero Action automatically analyzes your git diff, drafts a Conventional Commit message, suggests a clean branch name, checks out the branch, stages all changes, commits them, pushes to `origin`, and opens a PR using the `gh` CLI (or generates a clickable compare URL).
+
+### Scenario 6: Online Search & Live Documentation Reading
+To retrieve online API definitions or library manuals:
+1. Run `/search "fastapi background tasks example"` inside REPL chat.
+2. Zero Action fetches online results, displays a table, and injects the top descriptions into your active session history.
+3. Run `/read "https://fastapi.tiangolo.com/tutorial/background-tasks/"` to read the specific documentation page. The page's text context is automatically appended to the memory so you can immediately prompt: "Rewrite my background task using this page."
 
 ---
 

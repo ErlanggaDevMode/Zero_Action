@@ -206,7 +206,13 @@ def handle_config_command(parts: list[str], cmd_args: str, ctx: typer.Context, c
 
 
 
-def handle_slash_command(user_input: str, ctx: typer.Context, console: Console) -> bool:
+def handle_slash_command(
+    user_input: str,
+    ctx: typer.Context,
+    console: Console,
+    session_id: Optional[str] = None,
+    memory: Optional[MemoryManager] = None,
+) -> bool:
     """Handle slash commands inside REPL. Returns True if REPL loop should exit."""
     try:
         parts = shlex.split(user_input)
@@ -321,6 +327,55 @@ def handle_slash_command(user_input: str, ctx: typer.Context, console: Console) 
         elif cmd == "/config":
             handle_config_command(parts, cmd_args, ctx, console)
 
+        elif cmd == "/search":
+            from zero.cli.commands.search import search
+            query_val = cmd_args.strip()
+            if not query_val:
+                console.print("[bold red]Error:[/bold red] Missing search query.")
+            else:
+                search(ctx, query_val)
+                if memory and session_id:
+                    from zero.services.search import search_ddg
+                    results = search_ddg(query_val)
+                    if results and results[0]["title"] != "Error":
+                        summary = "\n".join(f"- Title: {r['title']}\n  URL: {r['url']}\n  Snippet: {r['snippet']}" for r in results[:3])
+                        msg_text = f"[System Search Note] Web search results for '{query_val}':\n{summary}"
+                        try:
+                            memory.sessions.add_message(
+                                message_id=str(uuid.uuid4())[:8],
+                                session_id=session_id,
+                                role="system",
+                                content=msg_text,
+                                token_count=0
+                            )
+                            console.print("[dim green](Search results injected into chat memory)[/dim green]")
+                        except Exception as e:
+                            logger.bind(category="cli").debug(f"Failed to inject search results to session: {e}")
+
+        elif cmd == "/read":
+            from zero.cli.commands.search import read
+            url_val = cmd_args.strip()
+            if not url_val:
+                console.print("[bold red]Error:[/bold red] Missing webpage URL.")
+            else:
+                read(ctx, url_val)
+                if memory and session_id:
+                    from zero.services.search import fetch_url_text
+                    text = fetch_url_text(url_val)
+                    if not text.startswith("Error reading URL"):
+                        msg_text = f"[System Doc Note] Webpage content from {url_val}:\n{text}"
+                        try:
+                            memory.sessions.add_message(
+                                message_id=str(uuid.uuid4())[:8],
+                                session_id=session_id,
+                                role="system",
+                                content=msg_text,
+                                token_count=0
+                            )
+                            console.print("[dim green](Webpage contents injected into chat memory)[/dim green]")
+                        except Exception as e:
+                            logger.bind(category="cli").debug(f"Failed to inject page text to session: {e}")
+
 
         else:
             console.print(
@@ -381,20 +436,12 @@ def chat(ctx: typer.Context) -> None:
     )
     console.print(welcome_panel)
 
-    logo = """
-[#DC143C]████████  ████████  ████████  ████████[/#DC143C]
-[#DC143C]    ██/   ██        ██    ██  ██    ██[/#DC143C]
-[#DC143C]   ██/    ██████    ████████  ██    ██[/#DC143C]
-[#DC143C]  ██/     ██        ██   ██   ██    ██[/#DC143C]
-[#DC143C]████████  ████████  ██    ██  ████████[/#DC143C]
-
-[#0047AB]████████  ████████  ████████  ████████  ████████  ███    ██[/#0047AB]
-[#0047AB]██    ██  ██           ██        ██     ██    ██  ████   ██[/#0047AB]
-[#0047AB]████████  ██           ██        ██     ██    ██  ██ ██  ██[/#0047AB]
-[#0047AB]██    ██  ██           ██        ██     ██    ██  ██  ██ ██[/#0047AB]
-[#0047AB]██    ██  ████████     ██     ████████  ████████  ██   ████[/#0047AB]
-"""
-    console.print(logo)
+    try:
+        from zero.cli.commands.logo_data import LOGO_MARKUP
+        for line in LOGO_MARKUP:
+            console.print(line)
+    except Exception:
+        console.print("[bold red]  ZERO ACTION[/bold red]")
 
     try:
         Prompt.ask("\n🎉 [bold #5fafff]Connection successful. Press[/bold #5fafff] [bold white]Enter[/bold white] [bold #5fafff]to continue[/bold #5fafff]", default="", show_default=False)
@@ -438,7 +485,13 @@ def chat(ctx: typer.Context) -> None:
 
         # Check for slash commands
         if user_input.strip().startswith("/"):
-            should_exit = handle_slash_command(user_input.strip(), ctx, console)
+            should_exit = handle_slash_command(
+                user_input.strip(),
+                ctx,
+                console,
+                session_id=session_id,
+                memory=memory,
+            )
             if should_exit:
                 break
             continue

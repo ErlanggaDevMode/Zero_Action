@@ -91,3 +91,9 @@ logs/
 *.so
 *.dylib
 *.dll
+
+# Temporary scrap files
+*.html
+
+
+docs/
