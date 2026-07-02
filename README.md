@@ -1,14 +1,14 @@
 <div align="center">
 
-# ⚡ Zero Action
+# Zero Action
 
 **Think Less. Build More.**
 
-AI Development Partner CLI — from idea to production, all from the terminal.
+AI Development Partner CLI — from raw idea to production release, all directly from your terminal.
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-80%20passed-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/tests-95%20passed-brightgreen)](#testing)
 [![Ruff](https://img.shields.io/badge/linter-ruff-orange)](https://docs.astral.sh/ruff/)
 [![Mypy](https://img.shields.io/badge/types-mypy-blue)](https://mypy-lang.org/)
 
@@ -16,331 +16,162 @@ AI Development Partner CLI — from idea to production, all from the terminal.
 
 ---
 
-## What is Zero Action?
+## 💡 What is Zero Action?
 
-Zero Action is a **CLI-first AI Development Partner** that understands your entire project — reads your repository, remembers architectural decisions, generates code, reviews it, fixes issues, and helps you ship production-quality software.
+Zero Action is a **CLI-first AI Development Partner** designed to act as your Architect, Senior Engineer, Code Reviewer, and DevOps Lead directly inside your terminal. It scans your repository, maintains a persistent memory of architectural decisions in a local SQLite database, writes fully typed source code, and helps you ship pull requests automatically.
 
-It is **not** a simple code autocomplete. It is a combination of:
-
-- 🏗️ **Software Architect** — plans your folder structure, ERDs, APIs
-- 🧑‍💻 **Senior Engineer** — generates production-ready, fully typed code
-- 🔍 **Code Reviewer** — analyses security, performance, maintainability
-- 🔧 **Auto-Fixer** — patches issues with a diff preview before writing
-- 🧠 **Memory System** — remembers decisions across sessions
-- 🌐 **Provider Agnostic** — works with any AI: OpenAI, Gemini, Claude, Ollama, and more
-
----
-
-## Features
-
-| Feature | Command |
-|---|---|
-| Scan & understand the current repo | `zero init` |
-| Configure AI provider | `zero setup` |
-| Ask a one-shot question | `zero ask` |
-| Interactive chat with memory | `zero chat` |
-| Generate a PRD | `zero plan` |
-| Design a system architecture | `zero architect` |
-| Generate source code files | `zero code` |
-| AI code review (security, perf, etc.) | `zero review` |
-| Fix code from error or review report | `zero fix` |
-| Manage memory (sessions, decisions) | `zero memory` |
-| Manage AI providers | `zero provider` |
-| View / update config | `zero config` |
+Unlike basic code autocomplete extensions, Zero Action acts as a full team:
+- 🏗️ **Software Architect** — maps folder structures, designs DDL schemas, plans APIs, and graphs systems.
+- 🧑‍💻 **Senior Engineer** — writes modular, clean, and fully typed code.
+- 🔍 **QA & Security Reviewer** — scans for security flaws, performance bottlenecks, and code smells.
+- 🔧 **Auto-Fixer & Self-Healer** — runs test suites, parses error tracebacks, drafts surgical fixes, and verifies them autonomously.
+- 🧠 **Memory Engine** — preserves sessions, choices, and semantic vectors locally.
+- 🌐 **Provider Agnostic** — works out-of-the-box with OpenAI, Gemini, Claude, Ollama, DeepSeek, and more.
 
 ---
 
-## Installation
+## 🚀 Commands & Features
 
-### Requirements
-
-- Python 3.12+
-- [`uv`](https://docs.astral.sh/uv/) (recommended) or `pip`
-
-### Install with uv
-
-```bash
-git clone https://github.com/your-org/zero-action.git
-cd zero-action
-uv sync
-```
-
-### Run
-
-```bash
-uv run zero --help
-```
-
-### Install globally (optional)
-
-```bash
-uv pip install -e .
-zero --help
-```
+| Feature | Command | Description |
+|---|---|---|
+| **Scan & Index Repo** | `zero init` | Scan project directory and store semantic embeddings in SQLite. |
+| **Setup Wizard** | `zero setup` | Interactive wizard to configure default AI endpoints. |
+| **Instant Q&A** | `zero ask` | Query project codebase with full context. |
+| **Interactive REPL** | `zero chat` | Persistent interactive console session inspired by Claude Code. |
+| **Web Search** | `zero search` / `/search` | Search DuckDuckGo with *Google DNS-over-HTTPS (DoH) Bypass* (anti-censorship). |
+| **Web Reader** | `zero read` / `/read` | Fetch clean webpage texts, stripping scripts and unescaping HTML entities. |
+| **Product Manager** | `zero plan` | Generate a Product Requirements Document (`prd.md`). |
+| **Architect Engine** | `zero architect` | Design system architectures based on requirements (`architecture.md`). |
+| **Coding Engine** | `zero code` | Write source files matching the system design. |
+| **QA Lead Review** | `zero review` | Inspect source files for security, performance, and style. |
+| **Auto-Patch** | `zero fix` | Apply code fixes from review reports or errors with interactive diffs. |
+| **QA Auto-Healer** | `zero test` / `/test` | Run linter/tests in the background and auto-heal tracebacks. |
+| **DevOps Pilot** | `zero pr` / `/pr` | Draft Conventional Commits, check out branch, push, and open PRs. |
+| **Memory Manager** | `zero memory` | Read and write SQLite tables (sessions, decisions, knowledge). |
+| **Provider Control** | `zero provider` | List, add, switch, test, or remove AI models. |
+| **System Config** | `zero config` | Show and set app settings (debug, logging levels). |
 
 ---
 
-## Quick Start
+## 🛠️ Installation & Setup
 
-### 1. Set up your AI provider
+### Prerequisites
+- Python 3.12 or higher.
+- [**`uv`**](https://docs.astral.sh/uv/) (Astral's fast Python package resolver).
+- Git.
 
+### Steps
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-org/zero-action.git
+   cd zero-action
+   ```
+2. Sync dependencies:
+   ```bash
+   uv sync
+   ```
+3. Run the setup wizard to configure API keys:
+   ```bash
+   uv run zero setup
+   ```
+4. Verify CLI execution:
+   ```bash
+   uv run zero --help
+   ```
+
+---
+
+## ⚡ Quick Start
+
+### 1. Initialize local context
+Inside your project directory, scan the codebase:
 ```bash
-zero setup
-```
-
-Supports: **OpenAI**, **Anthropic**, **Gemini**, **OpenRouter**, **Groq**, **Mistral**, **Azure OpenAI**, **DeepSeek**, **Ollama**, and any OpenAI-compatible endpoint.
-
-### 2. Scan your project
-
-```bash
-cd your-project/
 zero init
 ```
+Zero Action reads project frameworks, dependencies, Dockerfiles, and Git history to build a local vector index in SQLite.
 
-Zero Action reads your folder structure, languages, dependencies, Docker setup, and Git history to build a repository context used by all subsequent AI commands.
-
-### 3. Plan → Architect → Code → Review → Fix
-
+### 2. Standard Coding Workflow
 ```bash
-# Generate a PRD from your idea
-zero plan --requirements "Build a REST API for a task management app"
+# Generate a PRD from an idea
+zero plan --requirements "Build a FastAPI JWT authentication microservice"
 
-# Design the system architecture
+# Design system architecture
 zero architect
 
-# Generate code based on the architecture
-zero code --requirements "Implement the task model and CRUD endpoints"
+# Write actual code matching the architecture
+zero code
 
-# Review the generated code
-zero review --file src/tasks/routes.py --output docs/review.md
+# Review code for security flaws
+zero review --file zero/services/auth.py
 
-# Fix issues found in the review
-zero fix --file src/tasks/routes.py --review docs/review.md
+# Auto-fix issues flagged in the review
+zero fix --file zero/services/auth.py --review docs/review.md
 ```
 
----
-
-## Command Reference
-
-### `zero init`
-Scans the current working directory and caches repository context (languages, frameworks, dependencies, Git info).
-
-### `zero setup`
-Interactive wizard to configure an AI provider (name, API key, base URL, model). Tests the connection before saving.
-
-### `zero ask`
-Single-shot question with full repository context.
-```bash
-zero ask --question "What framework does this project use?"
-```
-
-### `zero chat`
-Interactive conversation loop with persistent session memory.
-```bash
+### 3. Live Web Search & Documentation Ingestion
+Search the web or read API specifications directly inside the active chat memory:
+```text
+# Launch REPL chat
 zero chat
-```
 
-### `zero plan`
-Generate a Product Requirement Document (PRD) in Markdown.
-```bash
-zero plan --requirements "SaaS billing system with Stripe"
-zero plan --output docs/prd.md
-```
+# Search DuckDuckGo (uses Google DoH bypass if blocked by local ISP)
+zero-action > /search fastapi background tasks example
 
-### `zero architect`
-Generate a system architecture design document.
-```bash
-zero architect --requirements "Microservices with FastAPI and PostgreSQL"
-zero architect --output docs/architecture.md
-```
-Auto-loads `docs/prd.md` if no `--requirements` given.
+# Extract clean documentation text (unescapes HTML entities like &bull; -> •)
+zero-action > /read https://fastapi.tiangolo.com/tutorial/background-tasks/
 
-### `zero code`
-Generate source code files from requirements and specs.
-```bash
-zero code --requirements "Implement the User model with SQLAlchemy"
-zero code --spec docs/architecture.md --output src/models/user.py
-```
-Auto-loads `docs/prd.md` and `docs/architecture.md` if present.  
-The AI can declare the output file with `File: path/to/output.py` — prompts before overwriting.
-
-### `zero review`
-AI code review covering security, performance, maintainability, scalability, and readability.
-```bash
-zero review --file src/app.py
-zero review --dir src/ --output docs/review.md
-zero review --file src/app.py --focus security,performance
-```
-
-### `zero fix`
-Fix a source file from an error, a review report, or a plain instruction. Always shows a diff and asks for confirmation before writing.
-```bash
-zero fix --file src/app.py --error "TypeError: unsupported operand"
-zero fix --file src/app.py --review docs/review.md
-zero fix --file src/app.py --instruction "Add input validation to all endpoints"
-zero fix --file src/app.py --error "..." --output src/app_fixed.py
-```
-
-### `zero provider`
-Manage AI providers.
-```bash
-zero provider list
-zero provider add
-zero provider switch openai
-zero provider test
-zero provider models
-zero provider remove groq
-```
-
-### `zero memory`
-Manage project memory stored in SQLite.
-```bash
-zero memory sessions list
-zero memory decisions add --content "Use PostgreSQL over SQLite for production"
-zero memory knowledge import docs/architecture.md
-```
-
-### `zero config`
-View and update configuration values.
-```bash
-zero config show
-zero config set app.debug true
+# Command the AI to code based on the freshly ingested web context
+zero-action > Write a background task wrapper using the documentation above.
 ```
 
 ---
 
-## AI Provider Support
-
-| Provider | Type | Notes |
-|---|---|---|
-| OpenAI | Cloud | GPT-4o, GPT-4, GPT-3.5 |
-| Anthropic | Cloud | Claude 3.5 Sonnet, Haiku |
-| Google Gemini | Cloud | Gemini 1.5 Pro/Flash |
-| OpenRouter | Cloud | Access to 100+ models |
-| Groq | Cloud | Ultra-fast inference |
-| Mistral | Cloud | mistral-large, codestral |
-| Azure OpenAI | Cloud | Enterprise deployments |
-| DeepSeek | Cloud | deepseek-coder, deepseek-chat |
-| Ollama | Local | llama3, mistral, codellama, etc. |
-| Any OpenAI-compatible | Custom | Provide base URL + model |
-
-API keys are stored locally in `~/.zero/providers.toml` and never sent to third parties.
+## 🎨 Premium UI & Latency Tracker
+Zero Action features a world-class terminal interface:
+- **Welcome Panel & Pixel-Logo:** Greets developers with a luxurious gold panel and high-fidelity crimson-outlined pixel logo rendered via Unicode half-blocks (`▀`).
+- **TTFT Tracker:** Displays a dynamic dot spinner `⠋ Thinking (X.Xs)...` showing latency until the first response token is streamed.
 
 ---
 
-## Configuration
+## ⚙️ Directory Structure
 
-All configuration lives in `~/.zero/`:
-
-```
-~/.zero/
-├── config.toml       # App settings (debug, log level)
-├── providers.toml    # Provider configs and API keys
-├── settings.toml     # User preferences
-├── memory.db         # SQLite memory database
-├── logs/             # Rotating log files
-└── sessions/         # Chat session history
-```
-
-Override the config directory:
-```bash
-ZERO_HOME=/custom/path zero --help
-```
-
----
-
-## Architecture
-
-Zero Action follows a **modular, domain-driven architecture** with strict separation of concerns:
-
-```
+```text
 zero/
-├── cli/          # Typer CLI layer — commands only, no business logic
-├── services/     # AI, config, and logging services
-├── repository/   # Scanner, language detector, Git analyser, etc.
-├── memory/       # Session, project, decision, knowledge managers
-├── providers/    # LiteLLM-backed provider abstraction
-├── prompts/      # Markdown prompt templates (planner, architect, coder…)
-├── storage/      # SQLite wrapper
-├── core/         # Shared exceptions and utilities
-└── models/       # Pydantic data models
+├── cli/          # 🖥️ CLI Layer: Parsing parameters & Typer routing. No business logic.
+├── core/         # ⚙️ Shared Core: UI Spinner, custom terminal panels, Exceptions.
+├── services/     # 🛠️ Services: Config manager (TOML), Logging, AI Wrapper, Web Search.
+├── repository/   # 🔍 Repo Intel: Framework detector, Git metrics, package analyzer.
+├── memory/       # 🧠 Memory: SQLite vector store, sessions, decisions managers.
+├── providers/    # 🌐 Providers: LiteLLM abstract wrappers.
+├── prompts/      # 📝 Prompts: System prompt Markdown templates (planner, coder, reviewer).
+└── models/       # 📦 Data Models: Pydantic typed schemas.
 ```
-
-### Prompt Templates
-
-All AI behaviour is driven by Markdown templates in `zero/prompts/`:
-
-| File | Purpose |
-|---|---|
-| `planner.md` | PRD structure and format rules |
-| `architect.md` | Architecture document format rules |
-| `coder.md` | Code generation rules (no placeholders, typed, documented) |
-| `reviewer.md` | 7-section review format (security → readability) |
-| `fixer.md` | Surgical fix rules (raw code output, preserve unrelated logic) |
-
-Templates are plain Markdown — customise them directly to change AI behaviour.
 
 ---
 
-## Development
+## 🧪 Testing & Code Quality (QA)
 
-### Run tests
+Zero Action maintains **95 unit & integration tests** passing 100%.
+
 ```bash
+# Run all tests
 uv run pytest
-uv run pytest -v                          # verbose
-uv run pytest tests/cli/test_fix_command.py  # single file
-```
 
-### Static analysis
-```bash
-uv run ruff check zero tests              # lint
-uv run mypy zero tests --ignore-missing-imports  # type check
-```
+# Check linter compliance (0 warnings enforced)
+uv run ruff check zero tests
 
-### Auto-fix lint issues
-```bash
-uv run ruff check --fix zero tests
+# Verify type safety
+uv run mypy zero tests --ignore-missing-imports
 ```
 
 ---
 
-## Testing
-
-The test suite covers 80 cases across unit and CLI integration tests:
-
-| Module | Tests |
-|---|---|
-| Config system | 8 |
-| AI service | 2 |
-| Logging | 2 |
-| Memory subsystem | 5 |
-| Provider layer | 5 |
-| Repository intelligence | 9 |
-| SQLite storage | 3 |
-| CLI — init, setup, version, verify | 6 |
-| CLI — ask & chat | 2 |
-| CLI — plan | 1 |
-| CLI — architect | 1 |
-| CLI — code | 6 |
-| CLI — review | 10 |
-| CLI — fix | 8 |
-| CLI — provider | 4 |
-| CLI — memory | 3 |
-| CLI — config | 4 |
+## 📘 Documentation Guides
+- **Manual Verification & Testing Scenarios:** Read [docs/panduan_fitur_lengkap.md](file:///c:/T/Zero_Action/docs/panduan_fitur_lengkap.md)
+- **Product Feature Roadmap (56+ Advanced Features):** Read [update.md](file:///c:/T/Zero_Action/update.md)
 
 ---
 
-## Project Philosophy
-
-- **Plan before code** — always understand before implementing
-- **Human in control** — AI never writes to disk without explicit confirmation
-- **Provider agnostic** — swap any model without changing commands
-- **Local first** — works fully offline with Ollama
-- **Modular** — every layer is independently testable and replaceable
-- **No vendor lock-in** — open formats (TOML, SQLite, Markdown)
-
----
-
-## License
+## 📄 License
 
 MIT © Zero Action Team
