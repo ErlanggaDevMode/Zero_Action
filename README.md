@@ -50,6 +50,10 @@ Unlike basic code autocomplete extensions, Zero Action acts as a full team:
 | **Memory Manager** | `zero memory` | Read and write SQLite tables (sessions, decisions, knowledge). |
 | **Provider Control** | `zero provider` | List, add, switch, test, or remove AI models. |
 | **System Config** | `zero config` | Show and set app settings (debug, logging levels). |
+| **Schema Explorer** | `zero schema` / `/schema` | Static AST analysis of DB models and endpoints as a terminal tree. |
+| **Refactor Wizard** | `zero refactor` / `/refactor` | AI-guided codebase refactoring with automatic test validation and git rollback on failure. |
+| **Docker Pilot** | `zero docker` / `/docker` | Auto-detect environment, generate Dockerfiles, spin up containers, inspect logs, and auto-heal startup crashes. |
+| **Voice Mode REPL** | `/voice` | Record mic, transcribe, process, and read response speech using local Whisper or API. |
 
 ---
 
@@ -123,6 +127,24 @@ zero-action > /read https://fastapi.tiangolo.com/tutorial/background-tasks/
 # Command the AI to code based on the freshly ingested web context
 zero-action > Write a background task wrapper using the documentation above.
 ```
+
+### 4. Advanced Otonom & Collaboration (Set 2)
+```bash
+# 📐 Visualise project schemas and endpoint maps
+uv run zero schema
+
+# 🔧 Agentic refactor modules with auto-tests check and git rollback on failure
+uv run zero refactor --file zero/services/auth.py --instruction "Optimize token hash check performance" --attempts 3
+
+# 🐳 DevOps Container Pilot: generate configs, build docker, check logs, and self-heal
+uv run zero docker
+
+# 🎙️ Voice Mode REPL: talk directly to terminal (uses local offline Whisper)
+uv run zero chat
+zero-action > /voice
+```
+> [!TIP]
+> Always prefix commands with `uv run` to ensure python imports packages (like local offline `whisper`) from the project's local virtual environment instead of global system python scopes!
 
 ---
 
