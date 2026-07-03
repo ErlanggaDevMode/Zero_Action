@@ -23,6 +23,13 @@ from zero.cli.commands.architect import architect
 from zero.cli.commands.code import code
 from zero.cli.commands.review import review
 from zero.cli.commands.fix import fix
+from zero.cli.commands.test import test
+from zero.cli.commands.pr import pr
+from zero.cli.commands.search import search, read
+from zero.cli.commands.billing import billing
+from zero.cli.commands.schema import schema
+from zero.cli.commands.refactor import refactor
+from zero.cli.commands.docker import docker
 
 
 app = typer.Typer(
@@ -84,6 +91,14 @@ app.command("architect")(architect)
 app.command("code")(code)
 app.command("review")(review)
 app.command("fix")(fix)
+app.command("test")(test)
+app.command("pr")(pr)
+app.command("search")(search)
+app.command("read")(read)
+app.command("billing")(billing)
+app.command("schema")(schema)
+app.command("refactor")(refactor)
+app.command("docker")(docker)
 app.add_typer(config_app)
 app.add_typer(memory_app)
 app.add_typer(provider_app)

@@ -92,5 +92,10 @@ logs/
 *.dylib
 *.dll
 
+# Temporary scrap files
+*.html
+
+
+docs/*
 # Ignore specific test output/log file
 tests/unit/test_logging.py

@@ -45,6 +45,26 @@ def init(ctx: typer.Context) -> None:
             console.print(f"[bold red]Error:[/bold red] Could not complete repository scan: {e}")
             raise typer.Exit(code=1)
 
+        task_emb = progress.add_task(description="Generating semantic code search embeddings...", total=None)
+        try:
+            from zero.storage.sqlite import SQLiteDatabase
+            from zero.memory.embeddings import RepositoryIndexer
+            
+            db_path = config_dir / "memory.db"
+            db = SQLiteDatabase(db_path)
+            
+            settings = cli_context.settings
+            indexer = RepositoryIndexer(settings, config_dir, repo_path, db)
+            
+            def update_progress(msg: str) -> None:
+                progress.update(task_emb, description=msg)
+                
+            indexer.index_repository(progress_callback=update_progress)
+            progress.update(task_emb, description="Semantic indexing complete.")
+        except Exception as e:
+            logger.bind(category="cli").warning(f"Failed to index semantic embeddings: {e}")
+            progress.update(task_emb, description="[bold yellow]Semantic indexing skipped/failed.[/bold yellow]")
+
     # 1. Prepare Overview Table
     metrics_table = Table.grid(padding=(0, 2))
     metrics_table.add_column("Key", style="dim cyan")
