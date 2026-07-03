@@ -113,12 +113,43 @@ class LiteLLMProvider(BaseProvider):
         """
         return bool(self.model)
 
+    def _prepare_caching_params(self, messages: List[Dict[str, Any]], kwargs: Dict[str, Any]) -> List[Dict[str, Any]]:
+        is_anthropic = "claude-3" in self.model.lower()
+        
+        modified_messages = []
+        for msg in messages:
+            if is_anthropic and msg.get("role") == "system" and isinstance(msg.get("content"), str):
+                modified_messages.append({
+                    "role": "system",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": msg["content"],
+                            "cache_control": {"type": "ephemeral"}
+                        }
+                    ]
+                })
+            else:
+                modified_messages.append(msg)
+                
+        if is_anthropic:
+            headers = kwargs.get("extra_headers") or {}
+            if not isinstance(headers, dict):
+                headers = {}
+            if "anthropic-beta" not in headers:
+                headers["anthropic-beta"] = "prompt-caching-2024-07-31"
+            kwargs["extra_headers"] = headers
+            
+        return modified_messages
+
     def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:
         """Perform a synchronous completions request."""
         try:
+            model_name = kwargs.pop("model", self.model)
+            modified_messages = self._prepare_caching_params(messages, kwargs)
             response = litellm.completion(
-                model=self.model,
-                messages=messages,
+                model=model_name,
+                messages=modified_messages,
                 api_key=self.api_key,
                 api_base=self.base_url,
                 **kwargs
@@ -127,7 +158,7 @@ class LiteLLMProvider(BaseProvider):
                 from zero.services.billing import log_tokens
                 prompt_toks = response.usage.prompt_tokens
                 completion_toks = response.usage.completion_tokens
-                log_tokens(self.model, prompt_toks, completion_toks)
+                log_tokens(model_name, prompt_toks, completion_toks)
             except Exception:
                 pass
             return response.choices[0].message.content or ""
@@ -139,9 +170,11 @@ class LiteLLMProvider(BaseProvider):
     ) -> AsyncGenerator[str, None]:
         """Perform an asynchronous streaming completions request."""
         try:
+            model_name = kwargs.pop("model", self.model)
+            modified_messages = self._prepare_caching_params(messages, kwargs)
             response = await litellm.acompletion(
-                model=self.model,
-                messages=messages,
+                model=model_name,
+                messages=modified_messages,
                 api_key=self.api_key,
                 api_base=self.base_url,
                 stream=True,
@@ -165,7 +198,10 @@ class LiteLLMProvider(BaseProvider):
                 api_base=self.base_url,
                 **kwargs
             )
-            return response.data[0].embedding
+            item = response.data[0]
+            if isinstance(item, dict):
+                return item.get("embedding", [])
+            return getattr(item, "embedding", [])
         except Exception as e:
             raise Exception(f"LiteLLM embedding error: {e}")
 

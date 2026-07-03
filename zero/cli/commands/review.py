@@ -84,6 +84,7 @@ def review(
         "--focus",
         help="Comma-separated focus areas: security,performance,maintainability,scalability,readability",
     ),
+    model: Optional[str] = typer.Option(None, "--model", "-m", help="AI model override to delegate specific task execution"),
 ) -> None:
     """Perform an AI-powered code review on a file or directory of source files."""
     from zero.services.ai import AIService
@@ -198,8 +199,17 @@ def review(
 
         messages = _build_messages(ai_service, reviewer_instructions, target_file, file_content, focus_areas)
 
+        target_model = model
+        if not target_model:
+            clean_focus = [f.strip().lower() for f in focus.split(",")]
+            if len(clean_focus) == 1 and clean_focus[0] == "readability":
+                target_model = "gemini/gemini-2.0-flash"
+
         try:
-            review_text = asyncio.run(stream_completion_with_timer(provider, messages, console))
+            kwargs = {}
+            if target_model:
+                kwargs["model"] = target_model
+            review_text = asyncio.run(stream_completion_with_timer(provider, messages, console, **kwargs))
             all_reviews.append(review_text)
         except Exception as e:
             logger.bind(category="cli").error(f"Error during streaming review for {target_file}: {e}")
