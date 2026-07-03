@@ -97,3 +97,5 @@ logs/
 
 
 docs/*
+# Ignore specific test output/log file
+tests/unit/test_logging.py
