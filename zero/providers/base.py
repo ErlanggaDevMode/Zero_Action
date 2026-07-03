@@ -123,6 +123,13 @@ class LiteLLMProvider(BaseProvider):
                 api_base=self.base_url,
                 **kwargs
             )
+            try:
+                from zero.services.billing import log_tokens
+                prompt_toks = response.usage.prompt_tokens
+                completion_toks = response.usage.completion_tokens
+                log_tokens(self.model, prompt_toks, completion_toks)
+            except Exception:
+                pass
             return response.choices[0].message.content or ""
         except Exception as e:
             raise Exception(f"LiteLLM completion error: {e}")

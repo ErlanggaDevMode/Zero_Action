@@ -107,6 +107,16 @@ class SQLiteDatabase:
                 embedding BLOB NOT NULL,
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS billing_log (
+                id TEXT PRIMARY KEY,
+                model TEXT NOT NULL,
+                prompt_tokens INTEGER DEFAULT 0,
+                completion_tokens INTEGER DEFAULT 0,
+                cost REAL DEFAULT 0.0,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
             """
         ]
         

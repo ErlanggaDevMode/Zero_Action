@@ -53,6 +53,77 @@ def _render_diff(original: str, fixed: str, filename: str, console: Console) -> 
     )
 
 
+def _apply_interactive_patches(original_lines: list[str], fixed_lines: list[str], console: Console) -> list[str]:
+    """Prompt the user for each contiguous block of differences, rebuilding the final line list."""
+    from difflib import SequenceMatcher
+    from rich.prompt import Prompt
+    from rich.syntax import Syntax
+    from rich.panel import Panel
+    
+    matcher = SequenceMatcher(None, original_lines, fixed_lines)
+    opcodes = matcher.get_opcodes()
+    
+    result_lines = []
+    apply_all = False
+    
+    for tag, i1, i2, j1, j2 in opcodes:
+        if tag == "equal":
+            result_lines.extend(original_lines[i1:i2])
+            continue
+            
+        orig_block = original_lines[i1:i2]
+        fixed_block = fixed_lines[j1:j2]
+        
+        diff_hunk_lines = []
+        for line in orig_block:
+            diff_hunk_lines.append(f"- {line}")
+        for line in fixed_block:
+            diff_hunk_lines.append(f"+ {line}")
+            
+        diff_text = "\n".join(diff_hunk_lines)
+        
+        if apply_all:
+            result_lines.extend(fixed_block)
+            continue
+            
+        console.print(
+            Panel(
+                Syntax(diff_text, "diff", theme="monokai", line_numbers=False),
+                title=f"[bold yellow]Proposed Change Chunk (Line {i1+1}-{i2})[/bold yellow]",
+                border_style="yellow",
+                expand=True
+            )
+        )
+        
+        while True:
+            choice = Prompt.ask(
+                "Apply this change chunk? [y/n/q/a]",
+                choices=["y", "n", "q", "a"],
+                default="y"
+            ).lower().strip()
+            
+            if choice == "y":
+                result_lines.extend(fixed_block)
+                break
+            elif choice == "n":
+                result_lines.extend(orig_block)
+                break
+            elif choice == "a":
+                apply_all = True
+                result_lines.extend(fixed_block)
+                break
+            elif choice == "q":
+                console.print("[yellow]Aborting remaining patch reviews, keeping original lines for the rest.[/yellow]")
+                result_lines.extend(orig_block)
+                # Find current opcode index to grab the rest
+                current_idx = opcodes.index((tag, i1, i2, j1, j2))
+                for rest_tag, rest_i1, rest_i2, _, _ in opcodes[current_idx + 1:]:
+                    result_lines.extend(original_lines[rest_i1:rest_i2])
+                return result_lines
+                
+    return result_lines
+
+
 def fix(
     ctx: typer.Context,
     file: Path = typer.Option(..., "--file", "-f", help="Source file to fix"),
@@ -60,6 +131,7 @@ def fix(
     review_report: Optional[Path] = typer.Option(None, "--review", "-r", help="Path to a review report file (e.g. from 'zero review --output')"),
     instruction: Optional[str] = typer.Option(None, "--instruction", "-i", help="Free-form fix instruction"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Write fixed code to this path (default: overwrite --file after confirmation)"),
+    interactive: bool = typer.Option(False, "--interactive", help="Interactively review and select which change chunks to apply"),
 ) -> None:
     """Fix a source file using AI, preview the diff, and write only after confirmation."""
     from zero.services.ai import AIService
@@ -168,12 +240,22 @@ def fix(
 
     fixed_content = _strip_code_fences(raw_response)
 
-    # -- Show diff ------------------------------------------------------------
-    _render_diff(original_content, fixed_content, file.name, console)
-
     if not fixed_content.strip():
         console.print("[bold red]Error:[/bold red] The AI returned an empty response. No changes written.")
         raise typer.Exit(code=1)
+
+    if interactive:
+        orig_lines = original_content.splitlines()
+        fixed_lines = fixed_content.splitlines()
+        rebuilt_lines = _apply_interactive_patches(orig_lines, fixed_lines, console)
+        fixed_content = "\n".join(rebuilt_lines)
+        if fixed_content and not fixed_content.endswith("\n"):
+            fixed_content += "\n"
+        console.print("\n[bold green]Final Rebuilt Diff Preview:[/bold green]")
+        _render_diff(original_content, fixed_content, file.name, console)
+    else:
+        # -- Show diff ------------------------------------------------------------
+        _render_diff(original_content, fixed_content, file.name, console)
 
     # -- Confirm before writing -----------------------------------------------
     write_target = output if output else file

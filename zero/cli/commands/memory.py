@@ -190,3 +190,55 @@ def import_knowledge(
         logger.bind(category="cli").error(f"Failed to import file: {e}")
         console.print(f"[bold red]Error:[/bold red] Failed to import knowledge: {e}")
         raise typer.Exit(code=1)
+
+@memory_app.command("search")
+def search(
+    ctx: typer.Context,
+    query: str = typer.Argument(..., help="The search query to match semantically")
+) -> None:
+    """Perform a semantic similarity search across the repository vector index."""
+    console = Console()
+    try:
+        from zero.services.ai import AIService
+        from zero.storage.sqlite import SQLiteDatabase
+        from zero.storage.vector import SQLiteVectorStore
+        from zero.memory.embeddings import RepositoryIndexer
+        
+        cli_context = ctx.obj
+        settings = cli_context.settings
+        config_dir = cli_context.config_dir
+        
+        db_path = config_dir / "memory.db"
+        db = SQLiteDatabase(db_path)
+        vector_store = SQLiteVectorStore(db)
+        
+        ai_service = AIService(settings, config_dir)
+        provider = ai_service.get_provider()
+        
+        repo_path = Path.cwd().resolve()
+        indexer = RepositoryIndexer(settings, config_dir, repo_path, db)
+        model_name, prefix = indexer._get_embedding_model_and_prefix()
+        full_model_path = prefix + model_name if prefix else model_name
+        
+        console.print(f"[yellow]Calculating query embedding using {full_model_path}...[/yellow]")
+        query_emb = provider.embeddings(query, model=full_model_path)
+        
+        results = vector_store.search_similar(query_emb, limit=5)
+        if not results:
+            console.print("[yellow]No similar code chunks found in vector index.[/yellow]")
+            return
+            
+        table = Table(title=f"[bold green]Semantic Search Results for: '{query}'[/bold green]", show_header=True, header_style="bold cyan")
+        table.add_column("Score", style="magenta")
+        table.add_column("File Path", style="bold white")
+        table.add_column("Chunk Index", style="dim")
+        table.add_column("Snippet Preview", style="green")
+        
+        for r in results:
+            score = f"{r['similarity']:.4f}"
+            snippet = r['content'][:80].replace("\n", " ") + "..."
+            table.add_row(score, r['file_path'], str(r['chunk_index']), snippet)
+            
+        console.print(table)
+    except Exception as e:
+        console.print(f"[bold red]Search failed:[/bold red] {e}")

@@ -26,6 +26,7 @@ from zero.cli.commands.fix import fix
 from zero.cli.commands.test import test
 from zero.cli.commands.pr import pr
 from zero.cli.commands.search import search, read
+from zero.cli.commands.billing import billing
 
 
 app = typer.Typer(
@@ -91,6 +92,7 @@ app.command("test")(test)
 app.command("pr")(pr)
 app.command("search")(search)
 app.command("read")(read)
+app.command("billing")(billing)
 app.add_typer(config_app)
 app.add_typer(memory_app)
 app.add_typer(provider_app)

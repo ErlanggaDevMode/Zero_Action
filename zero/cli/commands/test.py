@@ -80,6 +80,7 @@ def test(
     max_iterations: int = typer.Option(3, "--max-iterations", "-m", help="Maximum self-healing attempts"),
     file: Optional[Path] = typer.Option(None, "--file", "-f", help="Target source file to apply fixes on (auto-detects if omitted)"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Auto-approve AI changes without prompting"),
+    pipeline: bool = typer.Option(False, "--pipeline", "-p", help="Run the multi-stage quality pipeline (ruff check && mypy zero tests && pytest)"),
 ) -> None:
     """Run tests or linters and recursively self-heal code errors using AI."""
     from zero.services.ai import AIService
@@ -100,6 +101,8 @@ def test(
     except Exception as e:
         console.print(f"[bold red]Error resolving AI provider:[/bold red] {e}")
         raise typer.Exit(code=1)
+    if pipeline and command == "pytest":
+        command = "ruff check && mypy zero tests && pytest"
 
     console.print(f"\n[bold green]Zero Action Self-Healing Runner[/bold green] [dim]({provider.model})[/dim]")
     

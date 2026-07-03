@@ -4,9 +4,9 @@ Berkas ini mendokumentasikan rekomendasi fitur tingkat lanjut (advanced features
 
 ---
 
-## 📅 Set 1: RAG, Self-Healing, & DevOps (Prioritas Utama)
+## 📅 Set 1: RAG, Self-Healing, & DevOps (COMPLETED ✅)
 
-### 1. Slash Command `/learn` (Interactive Rule Persistence)
+### 1. Slash Command `/learn` (Interactive Rule Persistence) [SELESAI]
 - **Deskripsi:** Memungkinkan developer melatih AI secara langsung saat sesi chat berlangsung. Aturan yang diajarkan akan langsung dimasukkan ke database memori lokal agar tidak dilupakan oleh model AI.
 - **Contoh Penggunaan:**
   ```text
@@ -14,7 +14,7 @@ Berkas ini mendokumentasikan rekomendasi fitur tingkat lanjut (advanced features
   ```
 - **Cara Kerja:** Menyimpan aturan tersebut ke tabel `Decision Memory` di SQLite lokal (`memory.db`), lalu secara otomatis menginjeksi aturan tersebut ke system prompt pada setiap perintah modifikasi kode berikutnya.
 
-### 2. Semantic Search Explorer (`zero memory search`)
+### 2. Semantic Search Explorer (`zero memory search`) [SELESAI]
 - **Deskripsi:** Perintah khusus untuk mencari potongan kode di codebase lokal secara cerdas berdasarkan arti kata (semantik), bukan sekadar kecocokan kata kunci (keyword search).
 - **Cara Penggunaan:**
   ```bash
@@ -22,23 +22,23 @@ Berkas ini mendokumentasikan rekomendasi fitur tingkat lanjut (advanced features
   ```
 - **Cara Kerja:** Melakukan pencarian vektor (cosine similarity) di SQLite Vector Store lokal dan menampilkan potongan kode yang paling relevan beserta persentase skor kecocokan dalam bentuk tabel berwarna.
 
-### 3. Multi-Stage Self-Healing (`zero test --pipeline`)
+### 3. Multi-Stage Self-Healing (`zero test --pipeline`) [SELESAI]
 - **Deskripsi:** Memperluas fitur `zero test` agar dapat menguji linter, formatter, type checker, dan unit test sekaligus secara berantai (pipeline).
 - **Cara Kerja:** Menjalankan pipeline berantai seperti `ruff check && mypy zero && pytest`. Jika terjadi kesalahan di tahap mana pun (misal: kesalahan tipe data pada mypy), AI akan menangkap pesan kesalahan tersebut, merancang perbaikan, menyajikan visual diff, dan memperbaikinya secara otomatis.
 
-### 4. Git PR Changelog Generator (`zero pr --draft`)
+### 4. Git PR Changelog Generator (`zero pr --draft`) [SELESAI]
 - **Deskripsi:** Memperluas fungsi `zero pr` untuk menghasilkan draf detail Pull Request yang sangat lengkap (changelog perubahan, alasan arsitektur, dan mitigasi risiko) sebelum melakukan push.
 - **Cara Kerja:** Menganalisis modifikasi lokal (git diff), membuat deskripsi PR berkualitas tinggi melalui LLM, dan menampilkan pratinjaunya sebelum membuat PR di GitHub.
 
-### 5. Dashboard Penggunaan Token & Estimasi Biaya (`zero billing` / `/tokens`)
+### 5. Dashboard Penggunaan Token & Estimasi Biaya (`zero billing` / `/tokens`) [SELESAI]
 - **Deskripsi:** Melacak konsumsi token (input, output, dan cached tokens) dari API LLM yang digunakan, serta memberikan estimasi biaya riil dalam USD berdasarkan model yang aktif.
 - **Cara Kerja:** Membaca metadata token dari LiteLLM di setiap akhir respons chat/command dan menampilkannya dalam bentuk dashboard interaktif.
 
-### 6. Interactive Patch Picker (`zero fix --interactive`)
+### 6. Interactive Patch Picker (`zero fix --interactive`) [SELESAI]
 - **Deskripsi:** Memilih baris perbaikan kode secara interaktif dari CLI sebelum diaplikasikan, mirip dengan perintah `git add -p`.
 - **Cara Kerja:** Membagi rekomendasi diff panjang menjadi beberapa bongkahan (chunks) dan membiarkan developer memilih chunk mana saja yang ingin diterapkan menggunakan navigasi keyboard.
 
-### 7. Auto-Documentation Crawler (`/crawl <URL>`)
+### 7. Auto-Documentation Crawler (`/crawl <URL>`) [SELESAI]
 - **Deskripsi:** Membaca seluruh struktur dokumentasi API secara otomatis dari satu domain web, membersihkan tag HTML, dan memasukkannya ke dalam RAG sementara.
 - **Cara Kerja:** Melakukan crawling kedalaman terbatas pada URL yang diberikan untuk mengumpulkan konteks pustaka/framework versi terbaru yang belum ada di database offline model LLM.
 

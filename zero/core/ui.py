@@ -46,4 +46,12 @@ async def stream_completion_with_timer(provider, messages, console: Console) -> 
 
     total_time = time.time() - start_time
     console.print(f"[dim]Completed in {total_time:.1f}s[/dim]\n")
+    try:
+        from zero.services.billing import log_tokens
+        prompt_text = "".join(m.get("content", "") for m in messages if isinstance(m, dict))
+        prompt_tokens = provider.token_count(prompt_text)
+        completion_tokens = provider.token_count(response_text)
+        log_tokens(provider.model, prompt_tokens, completion_tokens)
+    except Exception:
+        pass
     return response_text

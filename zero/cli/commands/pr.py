@@ -67,6 +67,7 @@ def pr(
     body: Optional[str] = typer.Option(None, "--body", "-d", help="PR Description body (auto-generated if omitted)"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Auto-approve commit and branch checkout"),
     push: bool = typer.Option(True, "--push/--no-push", help="Push branch and trigger PR creation"),
+    draft: bool = typer.Option(False, "--draft", help="Only generate and display the PR draft (changelog, reasons, risk mitigation) without pushing or checkout"),
 ) -> None:
     """Automate branch creation, conventional commit generation, pushing, and Pull Request creation."""
     from zero.services.ai import AIService
@@ -112,15 +113,16 @@ def pr(
     if not is_dirty:
         console.print("\n[green]No uncommitted changes detected in repository.[/green]")
         # Check if there are committed changes to push
-        if active_branch_name in ("main", "master", "develop", "DETACHED_HEAD"):
+        if active_branch_name in ("main", "master", "develop", "DETACHED_HEAD") and not draft:
             console.print("[yellow]You are on a main branch and have no uncommitted changes. Aborting.[/yellow]\n")
             raise typer.Exit(code=0)
             
-        confirm_push = True
-        if not yes:
-            confirm_push = Confirm.ask(f"Push current branch '[cyan]{active_branch_name}[/cyan]' and create PR?", default=True)
-        if not confirm_push:
-            raise typer.Exit(code=0)
+        if not draft:
+            confirm_push = True
+            if not yes:
+                confirm_push = Confirm.ask(f"Push current branch '[cyan]{active_branch_name}[/cyan]' and create PR?", default=True)
+            if not confirm_push:
+                raise typer.Exit(code=0)
             
         generated_branch = active_branch_name
         # Fetch last 3 commits to generate PR info
@@ -156,6 +158,14 @@ def pr(
         pr_title = title or generated_title
         pr_body = body or generated_body
         generated_commit = ""
+
+        if draft:
+            console.print("\n[bold cyan]PR Draft Preview (Clean Repository):[/bold cyan]")
+            console.print(f"Active Branch:  [white]{active_branch_name}[/white]")
+            console.print(f"PR Title:       [white]{pr_title}[/white]")
+            console.print(f"PR Description:\n[dim]{pr_body}[/dim]\n")
+            console.print("[bold green]✓ PR Draft generated successfully (--draft mode). No git changes made.[/bold green]")
+            raise typer.Exit(code=0)
     else:
         # Dirty repository: generate branch name, commit message, and PR info
         diff_output = repo.git.diff()
@@ -204,6 +214,10 @@ def pr(
         console.print(f"Commit Msg:  [white]{commit_msg}[/white]")
         console.print(f"PR Title:    [white]{pr_title}[/white]")
         console.print(f"PR Description:\n[dim]{pr_body}[/dim]\n")
+
+        if draft:
+            console.print("[bold green]✓ PR Draft generated successfully (--draft mode). No git changes made.[/bold green]")
+            raise typer.Exit(code=0)
 
         # Confirm before action
         if not yes:

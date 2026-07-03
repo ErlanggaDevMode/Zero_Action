@@ -82,6 +82,15 @@ def parse_slash_args(cmd_args: str) -> tuple[dict[str, str], str]:
         elif part == "--body" and i + 1 < len(parts):
             opts["body"] = parts[i + 1]
             i += 2
+        elif part == "--interactive":
+            opts["interactive"] = "true"
+            i += 1
+        elif part in ("-p", "--pipeline"):
+            opts["pipeline"] = "true"
+            i += 1
+        elif part == "--draft":
+            opts["draft"] = "true"
+            i += 1
         else:
             req_parts.append(part)
             i += 1
@@ -121,6 +130,8 @@ def show_repl_help(console: Console) -> None:
     table.add_row("/test [command]", "Run tests or checks and trigger autonomous self-healing")
     table.add_row("/pr", "Automate Git conventional commits, pushing, and Pull Requests")
     table.add_row("/config [show/set]", "Display or assign app configurations dynamically")
+    table.add_row("/tokens", "View summarized token usage and estimated API cost dashboard")
+    table.add_row("/crawl <URL>", "Crawl documentation webpage recursively and import to knowledge base")
     table.add_row("/exit / /quit", "Quit the interactive loop")
 
     console.print(table)
@@ -168,6 +179,7 @@ def handle_memory_command(parts: list[str], cmd_args: str, ctx: typer.Context, c
         add_decision,
         list_decisions,
         import_knowledge,
+        search as memory_search,
     )
     if len(parts) < 2:
         console.print("[bold red]Error:[/bold red] Missing memory subcommand (e.g. /memory list-decisions).")
@@ -186,6 +198,9 @@ def handle_memory_command(parts: list[str], cmd_args: str, ctx: typer.Context, c
         list_decisions(ctx)
     elif sub == "import-knowledge" and len(parts) > 2:
         import_knowledge(ctx, Path(parts[2]))
+    elif sub == "search" and len(parts) > 2:
+        query_val = " ".join(parts[2:])
+        memory_search(ctx, query_val)
     else:
         console.print(f"[bold red]Error:[/bold red] Unknown memory subcommand: '{sub}'.")
 
@@ -297,8 +312,17 @@ def handle_slash_command(
             review_val: Optional[Path] = Path(opts["review"]) if "review" in opts else None
             fix_out_path: Optional[Path] = Path(opts["output"]) if "output" in opts else None
             err_val = opts.get("error")
+            interactive_val = opts.get("interactive") == "true"
 
-            fix(ctx, file=cast(Any, fix_file_val), error=err_val, review_report=cast(Any, review_val), instruction=instr_val, output=cast(Any, fix_out_path))
+            fix(
+                ctx,
+                file=cast(Any, fix_file_val),
+                error=err_val,
+                review_report=cast(Any, review_val),
+                instruction=instr_val,
+                output=cast(Any, fix_out_path),
+                interactive=interactive_val
+            )
 
         elif cmd == "/test":
             from zero.cli.commands.test import test
@@ -310,7 +334,8 @@ def handle_slash_command(
                 max_iters = 3
             file_val = Path(opts["file"]) if "file" in opts else None
             yes_val = opts.get("yes") == "true"
-            test(ctx, command=test_cmd, max_iterations=max_iters, file=file_val, yes=yes_val)
+            pipeline_val = opts.get("pipeline") == "true"
+            test(ctx, command=test_cmd, max_iterations=max_iters, file=file_val, yes=yes_val, pipeline=pipeline_val)
 
         elif cmd == "/pr":
             from zero.cli.commands.pr import pr
@@ -319,7 +344,8 @@ def handle_slash_command(
             title_val = opts.get("title")
             body_val = opts.get("body")
             yes_val = opts.get("yes") == "true"
-            pr(ctx, branch=branch_val, title=title_val, body=body_val, yes=yes_val, push=True)
+            draft_val = opts.get("draft") == "true"
+            pr(ctx, branch=branch_val, title=title_val, body=body_val, yes=yes_val, push=True, draft=draft_val)
 
         elif cmd == "/memory":
             handle_memory_command(parts, cmd_args, ctx, console)
@@ -372,10 +398,98 @@ def handle_slash_command(
                                 content=msg_text,
                                 token_count=0
                             )
-                            console.print("[dim green](Webpage contents injected into chat memory)[/dim green]")
                         except Exception as e:
                             logger.bind(category="cli").debug(f"Failed to inject page text to session: {e}")
 
+        elif cmd == "/learn":
+            rule_text = cmd_args.strip()
+            if not rule_text:
+                console.print("[bold red]Error:[/bold red] Missing rule text (e.g. /learn 'always use UTF-8').")
+            else:
+                try:
+                    if not memory:
+                        raise ValueError("Memory subsystem is not initialized. Run 'zero init' first.")
+                    rule_id = f"rule_{uuid.uuid4().hex[:8]}"
+                    project_path = str(Path.cwd().resolve())
+                    memory.decisions.add_decision(
+                        decision_id=rule_id,
+                        project_path=project_path,
+                        title="Learned Rule",
+                        problem="Persistent project rule",
+                        solution=rule_text,
+                        status="learned"
+                    )
+                    console.print("[bold green]Success: Rule learned and persisted to project memory.[/bold green]")
+                except Exception as e:
+                    console.print(f"[bold red]Error saving rule:[/bold red] {e}")
+
+        elif cmd == "/tokens":
+            from zero.cli.commands.billing import billing
+            billing(ctx)
+
+        elif cmd == "/crawl":
+            url_val = cmd_args.strip()
+            if not url_val:
+                console.print("[bold red]Error:[/bold red] Missing crawler target URL.")
+            else:
+                try:
+                    from zero.services.search import fetch_url_text, _urlopen_safe
+                    import urllib.parse
+                    import urllib.request
+                    import re
+                    
+                    console.print(f"[yellow]Starting crawler on: {url_val}...[/yellow]")
+                    parsed_root = urllib.parse.urlparse(url_val)
+                    domain = parsed_root.netloc
+                    prefix = parsed_root.path
+                    
+                    main_html = ""
+                    req = urllib.request.Request(
+                        url_val,
+                        headers={
+                            "User-Agent": (
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                "Chrome/120.0.0.0 Safari/537.36"
+                            )
+                        }
+                    )
+                    with _urlopen_safe(req, timeout=8) as resp:
+                        main_html = resp.read().decode("utf-8", errors="replace")
+                        
+                    links_found = re.findall(r'href=["\']([^"\']+)["\']', main_html)
+                    urls_to_crawl = [url_val]
+                    for link in links_found:
+                        full_url = urllib.parse.urljoin(url_val, link)
+                        parsed_link = urllib.parse.urlparse(full_url)
+                        if parsed_link.netloc == domain and parsed_link.path.startswith(prefix):
+                            clean_url = urllib.parse.urlunparse((parsed_link.scheme, parsed_link.netloc, parsed_link.path, "", "", ""))
+                            if clean_url not in urls_to_crawl:
+                                urls_to_crawl.append(clean_url)
+                                
+                    urls_to_crawl = urls_to_crawl[:10]
+                    console.print(f"[cyan]Found {len(urls_to_crawl)} matching pages to crawl.[/cyan]")
+                    
+                    crawled_count = 0
+                    for page_url in urls_to_crawl:
+                        console.print(f"Reading: [dim]{page_url}[/dim]...")
+                        page_text = fetch_url_text(page_url)
+                        if page_text and not page_text.startswith("Error reading URL"):
+                            if not memory:
+                                raise ValueError("Memory subsystem is not initialized. Run 'zero init' first.")
+                            knowledge_id = f"crawl_{uuid.uuid4().hex[:8]}"
+                            page_title = page_url.split("/")[-1] or page_url.split("/")[-2] or "Crawled Doc"
+                            memory.knowledge.add_knowledge(
+                                knowledge_id=knowledge_id,
+                                title=page_title,
+                                content=page_text,
+                                source=page_url
+                            )
+                            crawled_count += 1
+                            
+                    console.print(f"[bold green]Success: Crawled and indexed {crawled_count} pages into knowledge base.[/bold green]")
+                except Exception as e:
+                    console.print(f"[bold red]Crawler error:[/bold red] {e}")
 
         else:
             console.print(

@@ -50,8 +50,56 @@ class AIService:
             except Exception as e:
                 logger.warning(f"Failed to read/compile repository summary cache: {e}")
 
+        # Add learned rules context if memory database exists
+        try:
+            from zero.storage.sqlite import SQLiteDatabase
+            db_path = self.config_dir / "memory.db"
+            if db_path.exists():
+                db = SQLiteDatabase(db_path)
+                decisions = db.fetch_all(
+                    "SELECT title, problem, solution, status FROM decisions WHERE project_path = ? OR status = 'learned';",
+                    (str(repo_path.resolve()),)
+                )
+                if decisions:
+                    context_lines.append("\nRECORDED DECISIONS & RULES:")
+                    for d in decisions:
+                        status_prefix = "[LEARNED RULE] " if d["status"] == "learned" else f"[{d['status'].upper()}] "
+                        context_lines.append(f"- {status_prefix}{d['title']}: Problem: {d['problem']} | Solution: {d['solution']}")
+                    context_lines.append("---")
+        except Exception as e:
+            logger.warning(f"Failed to query decisions/rules for system prompt: {e}")
+
         # Add semantic code chunks context if a query is provided
         if query:
+            # Query knowledge base database table for keywords
+            try:
+                import re
+                from zero.storage.sqlite import SQLiteDatabase
+                db_path = self.config_dir / "memory.db"
+                if db_path.exists():
+                    db = SQLiteDatabase(db_path)
+                    words = [w for w in re.split(r'\W+', query) if len(w) > 3]
+                    knowledge_hits = []
+                    seen_knowledge_ids = set()
+                    for word in words[:4]:
+                        hits = db.fetch_all("SELECT id, title, content, source FROM knowledge WHERE title LIKE ? OR content LIKE ? LIMIT 2;", (f"%{word}%", f"%{word}%"))
+                        for h in hits:
+                            if h["id"] not in seen_knowledge_ids:
+                                seen_knowledge_ids.add(h["id"])
+                                knowledge_hits.append(h)
+                    if knowledge_hits:
+                        context_lines.append("\nIMPORTED KNOWLEDGE & DOCUMENTATION:")
+                        for kh in knowledge_hits[:3]:
+                            context_lines.extend([
+                                f"- Title: {kh['title']} (Source: {kh['source']})",
+                                "```",
+                                kh["content"][:2000],
+                                "```"
+                            ])
+                        context_lines.append("---")
+            except Exception as e:
+                logger.warning(f"Failed to query knowledge base: {e}")
+
             try:
                 from zero.storage.sqlite import SQLiteDatabase
                 from zero.storage.vector import SQLiteVectorStore
