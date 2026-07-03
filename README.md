@@ -65,23 +65,58 @@ Unlike basic code autocomplete extensions, Zero Action acts as a full team:
 - Git.
 
 ### Steps
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-org/zero-action.git
-   cd zero-action
-   ```
-2. Sync dependencies:
-   ```bash
-   uv sync
-   ```
-3. Run the setup wizard to configure API keys:
-   ```bash
-   uv run zero setup
-   ```
-4. Verify CLI execution:
-   ```bash
-   uv run zero --help
-   ```
+
+First, clone the repository:
+```bash
+git clone https://github.com/ErlanggaDevMode/Zero_Action.git
+cd Zero_Action
+```
+
+Choose **one** of the following methods to install and run Zero Action on your computer:
+
+#### Method 1: Using `uv` (Recommended / Fastest)
+Requires Astral's [**`uv`**](https://docs.astral.sh/uv/) installed.
+```bash
+# 1. Sync dependencies and build virtualenv automatically
+uv sync
+
+# 2. Run commands inside virtualenv
+uv run zero setup
+uv run zero chat
+```
+
+#### Method 2: Using standard Python `venv`
+Create and activate a virtual environment manually:
+```bash
+# 1. Create virtual environment
+python -m venv .venv
+
+# 2. Activate virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
+
+# 3. Install package in editable mode with dependencies
+pip install -e .
+
+# 4. Run commands directly
+zero setup
+zero chat
+```
+
+#### Method 3: Using `pipx` (Cleanest for Global CLI Tool)
+Install globally in an isolated environment without manual virtualenv activation:
+```bash
+# 1. Install globally from local repository
+pipx install .
+
+# 2. Run from anywhere on your system
+zero setup
+zero chat
+```
+
+---
 
 ### AI Provider Configuration
 Zero Action is provider agnostic. You can configure your model settings using three methods:
