@@ -83,6 +83,42 @@ Unlike basic code autocomplete extensions, Zero Action acts as a full team:
    uv run zero --help
    ```
 
+### AI Provider Configuration
+Zero Action is provider agnostic. You can configure your model settings using three methods:
+
+#### Method A: Interactive Setup Wizard (Recommended)
+Run the built-in configuration utility:
+```bash
+uv run zero setup
+```
+This utility lets you select your active provider, paste API keys, and configure default models interactively.
+
+#### Method B: Manual config file edits
+Configurations are saved under `~/.zero/providers.toml` (located at `C:\Users\<Name>\.zero\providers.toml` on Windows). Open this file and configure your active provider details:
+```toml
+[provider]
+active_provider = "openrouter"
+
+[provider.openrouter]
+api_key = "sk-or-v1-your-key-here"
+model = "openrouter/meta-llama/llama-3.3-70b-instruct"
+
+[provider.openai]
+api_key = "sk-proj-your-key-here"
+model = "gpt-4o"
+```
+
+#### Method C: Environment Variables (CI/CD and automation)
+You can define keys directly in your shell or a `.env` file in the workspace root. Prefix variables with `ZERO_PROVIDER__<PROVIDER_NAME>__`:
+```bash
+# Set active provider
+export ZERO_PROVIDER__ACTIVE_PROVIDER="openrouter"
+
+# Set provider details
+export ZERO_PROVIDER__OPENROUTER__API_KEY="sk-or-v1-..."
+export ZERO_PROVIDER__OPENROUTER__MODEL="openrouter/meta-llama/llama-3.3-70b-instruct"
+```
+
 ---
 
 ## ⚡ Quick Start
