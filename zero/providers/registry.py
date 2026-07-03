@@ -12,6 +12,11 @@ from zero.providers.azure import AzureProvider
 from zero.providers.deepseek import DeepSeekProvider
 from zero.providers.mistral import MistralProvider
 from zero.providers.compatible import CompatibleProvider
+from zero.providers.nvidia import NvidiaProvider
+from zero.providers.alibaba import AlibabaProvider
+from zero.providers.bedrock import BedrockProvider
+from zero.providers.vertex import VertexProvider
+from zero.providers.opencode import OpenCodeProvider
 
 PROVIDER_CLASSES: Dict[str, Type[BaseProvider]] = {
     "openai": OpenAIProvider,
@@ -24,4 +29,9 @@ PROVIDER_CLASSES: Dict[str, Type[BaseProvider]] = {
     "deepseek": DeepSeekProvider,
     "mistral": MistralProvider,
     "compatible": CompatibleProvider,
+    "nvidia": NvidiaProvider,
+    "alibaba": AlibabaProvider,
+    "bedrock": BedrockProvider,
+    "vertex": VertexProvider,
+    "opencode": OpenCodeProvider,
 }

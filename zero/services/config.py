@@ -86,6 +86,37 @@ class CompatibleProviderConfig(BaseModel):
     model: Optional[str] = None
 
 
+class NvidiaProviderConfig(BaseModel):
+    """Nvidia NIM connection settings."""
+    api_key: Optional[str] = None
+    base_url: str = "https://integrate.api.nvidia.com/v1"
+    model: str = "meta/llama3-70b-instruct"
+
+
+class AlibabaProviderConfig(BaseModel):
+    """Alibaba DashScope connection settings."""
+    api_key: Optional[str] = None
+    base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    model: str = "qwen-turbo"
+
+
+class BedrockProviderConfig(BaseModel):
+    """AWS Bedrock connection settings."""
+    model: str = "anthropic.claude-3-sonnet-20240229-v1:0"
+
+
+class VertexProviderConfig(BaseModel):
+    """GCP Vertex AI connection settings."""
+    model: str = "gemini-1.5-pro"
+
+
+class OpenCodeProviderConfig(BaseModel):
+    """HuggingFace OpenCode connection settings."""
+    api_key: Optional[str] = None
+    base_url: str = "https://api-inference.huggingface.co/v1"
+    model: str = "codellama/CodeLlama-34b-Instruct-hf"
+
+
 # ==========================================
 # Consolidated Schema Models
 # ==========================================
@@ -111,6 +142,11 @@ class ProviderConfig(BaseModel):
     deepseek: DeepSeekProviderConfig = Field(default_factory=DeepSeekProviderConfig)
     mistral: MistralProviderConfig = Field(default_factory=MistralProviderConfig)
     compatible: CompatibleProviderConfig = Field(default_factory=CompatibleProviderConfig)
+    nvidia: NvidiaProviderConfig = Field(default_factory=NvidiaProviderConfig)
+    alibaba: AlibabaProviderConfig = Field(default_factory=AlibabaProviderConfig)
+    bedrock: BedrockProviderConfig = Field(default_factory=BedrockProviderConfig)
+    vertex: VertexProviderConfig = Field(default_factory=VertexProviderConfig)
+    opencode: OpenCodeProviderConfig = Field(default_factory=OpenCodeProviderConfig)
 
 
 class GlobalSettings(BaseModel):

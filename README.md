@@ -26,7 +26,7 @@ Unlike basic code autocomplete extensions, Zero Action acts as a full team:
 - 🔍 **QA & Security Reviewer** — scans for security flaws, performance bottlenecks, and code smells.
 - 🔧 **Auto-Fixer & Self-Healer** — runs test suites, parses error tracebacks, drafts surgical fixes, and verifies them autonomously.
 - 🧠 **Memory Engine** — preserves sessions, choices, and semantic vectors locally.
-- 🌐 **Provider Agnostic** — works out-of-the-box with OpenAI, Gemini, Claude, Ollama, DeepSeek, and more.
+- 🌐 **Provider Agnostic** — works out-of-the-box with OpenAI, Anthropic, Gemini, OpenRouter, Ollama, Groq, Azure, DeepSeek, Mistral, Nvidia NIM, Alibaba DashScope, AWS Bedrock, GCP Vertex AI, and HuggingFace OpenCode.
 
 ---
 
