@@ -93,6 +93,6 @@ def test_new_provider_chat_calls(mock_completion, temp_zero_dir) -> None:
     mock_completion.assert_called_with(
         model="openai/deepseek-coder",
         messages=messages,
-        api_key=None,
+        api_key="free",
         api_base="https://opencode.ai/zen/v1"
     )

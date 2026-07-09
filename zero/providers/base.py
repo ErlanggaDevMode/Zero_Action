@@ -156,11 +156,15 @@ class LiteLLMProvider(BaseProvider):
                     model_name = f"openai/{model_name}"
                 elif getattr(self, "provider_name", None) and self.provider_name != "openai":
                     model_name = f"{self.provider_name}/{model_name}"
+            api_key_to_pass = self.api_key
+            if not api_key_to_pass and getattr(self, "is_custom_compatible", False):
+                api_key_to_pass = "free"
+
             modified_messages = self._prepare_caching_params(messages, kwargs)
             response = litellm.completion(
                 model=model_name,
                 messages=modified_messages,
-                api_key=self.api_key,
+                api_key=api_key_to_pass,
                 api_base=self.base_url,
                 **kwargs
             )
@@ -186,11 +190,15 @@ class LiteLLMProvider(BaseProvider):
                     model_name = f"openai/{model_name}"
                 elif getattr(self, "provider_name", None) and self.provider_name != "openai":
                     model_name = f"{self.provider_name}/{model_name}"
+            api_key_to_pass = self.api_key
+            if not api_key_to_pass and getattr(self, "is_custom_compatible", False):
+                api_key_to_pass = "free"
+
             modified_messages = self._prepare_caching_params(messages, kwargs)
             response = await litellm.acompletion(
                 model=model_name,
                 messages=modified_messages,
-                api_key=self.api_key,
+                api_key=api_key_to_pass,
                 api_base=self.base_url,
                 stream=True,
                 **kwargs

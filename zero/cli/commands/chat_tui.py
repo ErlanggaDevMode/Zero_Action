@@ -9,7 +9,8 @@ from typing import Any, List
 from prompt_toolkit.application import Application
 from prompt_toolkit.styles import Style
 from prompt_toolkit.formatted_text import HTML
-from prompt_toolkit.layout.containers import HSplit, VSplit, Window, WindowAlign, DynamicContainer
+from prompt_toolkit.layout.containers import HSplit, VSplit, Window, WindowAlign, DynamicContainer, FloatContainer, Float
+from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.widgets import Frame, TextArea
@@ -276,7 +277,7 @@ def run_tui(
     input_field = TextArea(
         height=3,
         multiline=False,
-        prompt="Ask anything... ",
+        prompt="",
         completer=completer,
         history=None,
         accept_handler=_accept_handler
@@ -383,7 +384,16 @@ def run_tui(
             ], width=Dimension(weight=1))
         ])
 
-    root_container = DynamicContainer(get_main_layout)
+    root_container = FloatContainer(
+        content=DynamicContainer(get_main_layout),
+        floats=[
+            Float(
+                xcursor=True,
+                ycursor=True,
+                content=CompletionsMenu(max_height=16)
+            )
+        ]
+    )
 
     # Key Bindings
     kb = KeyBindings()
