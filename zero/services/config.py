@@ -7,7 +7,7 @@ and provides schema validation models for all 10 supported AI providers.
 import os
 import tomllib
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from zero.core.exceptions import ConfigError
@@ -155,6 +155,7 @@ class ProviderConfig(BaseModel):
     vertex: VertexProviderConfig = Field(default_factory=VertexProviderConfig)
     opencode: OpenCodeProviderConfig = Field(default_factory=OpenCodeProviderConfig)
     opencode_zen: OpenCodeZenProviderConfig = Field(default_factory=OpenCodeZenProviderConfig)
+    backup_providers: List[str] = Field(default_factory=list)
 
 
 class GlobalSettings(BaseModel):
@@ -198,6 +199,12 @@ def dict_to_toml(d: Dict[str, Any], prefix: str = "") -> str:
                 lines.append(f"{k} = {str(v).lower()}")
             elif isinstance(v, (int, float)):
                 lines.append(f"{k} = {v}")
+            elif isinstance(v, list):
+                items = []
+                for item in v:
+                    escaped_item = str(item).replace("\\", "\\\\").replace('"', '\\"')
+                    items.append(f'"{escaped_item}"')
+                lines.append(f"{k} = [{', '.join(items)}]")
             elif v is None:
                 lines.append(f"{k} = \"\"")
             else:

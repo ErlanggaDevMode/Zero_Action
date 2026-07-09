@@ -129,3 +129,30 @@ def setup(ctx: typer.Context) -> None:
             border_style="green",
         )
     )
+
+    # 9. Prompt for Backup Providers Configuration
+    configure_backups = Confirm.ask(
+        "Would you like to configure backup providers for automatic fallback?",
+        default=False,
+    )
+    if configure_backups:
+        backup_choices = [c for c in choices if c != provider_name]
+        console.print(f"Available backup options: {backup_choices}")
+        backup_input = Prompt.ask(
+            "Enter comma-separated backup providers in priority order (e.g. openrouter, openai)",
+            default="",
+        )
+        if backup_input.strip():
+            backups = [b.strip().lower() for b in backup_input.split(",") if b.strip().lower() in backup_choices]
+            settings.provider.backup_providers = backups
+            save_config(settings, config_dir)
+            console.print(f"[bold green]✓ Configured backup providers: {backups}[/bold green]")
+        else:
+            settings.provider.backup_providers = []
+            save_config(settings, config_dir)
+    else:
+        # Keep existing backups or clear them based on confirm
+        clear_backups = Confirm.ask("Would you like to clear any existing backup providers?", default=False)
+        if clear_backups:
+            settings.provider.backup_providers = []
+            save_config(settings, config_dir)

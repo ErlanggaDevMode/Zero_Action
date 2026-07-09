@@ -711,15 +711,18 @@ def handle_slash_command(
 
 def setup_readline_completer(settings: Any) -> bool:
     """Configure terminal autocomplete for slash commands, active providers, and model mappings."""
+    rl: Any = None
     try:
         import readline
+        rl = readline
     except ImportError:
         try:
-            import pyreadline3 as readline  # type: ignore[import-not-found]
+            import pyreadline3 as pyrl  # type: ignore[import-not-found]
+            rl = pyrl
         except ImportError:
-            readline = None
+            pass
 
-    if not readline:
+    if not rl:
         return False
 
     commands = [
@@ -733,7 +736,7 @@ def setup_readline_completer(settings: Any) -> bool:
     providers = list(PROVIDER_CLASSES.keys())
 
     def completer(text: str, state: int) -> Optional[str]:
-        buffer = readline.get_line_buffer()
+        buffer = rl.get_line_buffer()
         words = buffer.split()
         
         if not buffer or buffer.startswith("/"):
@@ -755,13 +758,13 @@ def setup_readline_completer(settings: Any) -> bool:
                                 return model_name if state == 0 else None
         return None
 
-    readline.set_completer(completer)
-    doc_str = getattr(readline, "__doc__", "") or ""
-    file_str = getattr(readline, "__file__", "") or ""
+    rl.set_completer(completer)
+    doc_str = getattr(rl, "__doc__", "") or ""
+    file_str = getattr(rl, "__file__", "") or ""
     if "libedit" in doc_str or "libedit" in file_str:
-        readline.parse_and_bind("bind ^I rl_complete")
+        rl.parse_and_bind("bind ^I rl_complete")
     else:
-        readline.parse_and_bind("tab: complete")
+        rl.parse_and_bind("tab: complete")
     return True
 
 

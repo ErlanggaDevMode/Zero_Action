@@ -15,8 +15,8 @@ def test_setup_openai_success(mock_completion, temp_zero_dir) -> None:
     # Mock completion for ping connection test success
     mock_completion.return_value = MagicMock()
 
-    # Inputs: Provider, API Key, Base URL, Model
-    inputs = "openai\nsk-openai-key\nhttps://api.openai.com/v1\ngpt-4o\n"
+    # Inputs: Provider, API Key, Base URL, Model, Configure backup providers (n), Clear backups (n)
+    inputs = "openai\nsk-openai-key\nhttps://api.openai.com/v1\ngpt-4o\nn\nn\n"
     result = runner.invoke(app, ["setup"], input=inputs)
 
     assert result.exit_code == 0
@@ -38,8 +38,8 @@ def test_setup_connection_failed_save_anyway(mock_completion, temp_zero_dir) -> 
     # Mock connection error
     mock_completion.side_effect = Exception("Connection Failed")
 
-    # Inputs: Provider, API Key, Base URL, Model, Save anyway (y)
-    inputs = "openai\nsk-fail-key\nhttps://api.openai.com/v1\ngpt-4o\ny\n"
+    # Inputs: Provider, API Key, Base URL, Model, Save anyway (y), Configure backup (n), Clear backups (n)
+    inputs = "openai\nsk-fail-key\nhttps://api.openai.com/v1\ngpt-4o\ny\nn\nn\n"
     result = runner.invoke(app, ["setup"], input=inputs)
 
     assert result.exit_code == 0
