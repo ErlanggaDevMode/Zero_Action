@@ -5,6 +5,7 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 import litellm
 litellm.suppress_debug_info = True
 litellm.set_verbose = False
+litellm.helper_warnings = False
 
 
 class BaseProvider(ABC):
