@@ -1,7 +1,6 @@
 import typer
 import subprocess
 from pathlib import Path
-from git import Repo
 from rich.console import Console
 from zero.services.ai import AIService
 from zero.core.exceptions import ConfigError
@@ -26,6 +25,7 @@ def refactor(
         raise typer.Exit(code=1)
         
     cwd = Path.cwd().resolve()
+    from git import Repo
     repo = Repo(cwd)
     
     target_file = Path(file).resolve()

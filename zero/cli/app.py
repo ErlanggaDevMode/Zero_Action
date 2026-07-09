@@ -31,6 +31,13 @@ from zero.cli.commands.schema import schema
 from zero.cli.commands.refactor import refactor
 from zero.cli.commands.docker import docker
 from zero.cli.commands.update import update
+from zero.cli.commands.test_gen import run_test_gen
+from zero.cli.commands.dashboard import dashboard
+from zero.cli.commands.doc_gen import doc_gen
+from zero.cli.commands.benchmark import run_benchmark
+from zero.cli.commands.mock_server import mock_server
+from zero.cli.commands.release import generate_release_notes
+from zero.cli.commands.shortcut import run_shortcut
 
 
 app = typer.Typer(
@@ -103,6 +110,13 @@ app.command("schema")(schema)
 app.command("refactor")(refactor)
 app.command("docker")(docker)
 app.command("update")(update)
+app.command("test-gen")(run_test_gen)
+app.command("dashboard")(dashboard)
+app.command("doc-gen")(doc_gen)
+app.command("benchmark")(run_benchmark)
+app.command("mock")(mock_server)
+app.command("release")(generate_release_notes)
+app.command("shortcut")(run_shortcut)
 app.add_typer(config_app)
 app.add_typer(memory_app)
 app.add_typer(provider_app)

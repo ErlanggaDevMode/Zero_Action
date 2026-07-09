@@ -128,6 +128,12 @@ def run_tui(
         "/docker": "Docker auto-pilot helper",
         "/voice": "Mic recording and audio transcription REPL chat",
         "/crawl": "Crawl documentation pages into knowledge base",
+        "/docmaker": "Scan project endpoints and generate markdown API documentation",
+        "/testgen": "Analyze file and generate unit tests with pytest",
+        "/dashboard": "Launch the interactive TUI Dashboard",
+        "/benchmark": "Benchmark active AI model performance & cost",
+        "/mock": "Scan project endpoints and spin up a mock API server in background",
+        "/release": "Analyze git commits to draft release notes and CHANGELOG.md",
         "/exit": "Quit the interactive loop",
         "/quit": "Quit the interactive loop",
     }

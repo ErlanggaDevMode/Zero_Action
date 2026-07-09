@@ -88,15 +88,8 @@ Berkas ini mendokumentasikan rekomendasi fitur tingkat lanjut (advanced features
 - **Deskripsi:** Menghasilkan dokumentasi OpenAPI (Swagger) Markdown, Postman Collection, atau berkas referensi API secara otomatis langsung dari kode router FastAPI/Flask. bisa di panggil di chat dengan /docmaker
 - **Cara Kerja:** AI menganalisis rute, tipe argumen fungsi, dan schema model input/output untuk merancang dokumentasi yang interaktif.
 
-### 17. DB Migration Planner (`zero migration`)
-- **Deskripsi:** AI membandingkan model database Python saat ini dengan database aktual atau revisi migration yang sudah ada, lalu menulis skrip migrasi (Alembic DDL) secara otonom. juga fungsi /migration di chat
-- **Cara Kerja:** AI memproses perubahan kolom, constraint, indeks baru, dan menghasilkan DDL migrasi SQL/Python yang aman.
-
-### 18. Whiteboard Diagram & ASCII Canvas (`zero whiteboard`)
-- **Deskripsi:** Papan tulis ASCII/Unicode interaktif dalam terminal untuk merancang alur diagram sistem arsitektur secara kolaboratif bersama AI asisten.
-- **Cara Kerja:** Developer dapat menggambarkan blok dasar diagram, dan AI akan merapikannya menjadi skema Mermaid/ASCII art yang informatif.
-
 ---
+
 
 ## 🔒 Set 4: Keamanan, Kolaborasi Tim, & Sandbox
 

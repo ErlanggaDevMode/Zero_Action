@@ -242,3 +242,9 @@ def search(
         console.print(table)
     except Exception as e:
         console.print(f"[bold red]Search failed:[/bold red] {e}")
+
+@memory_app.command("git")
+def memory_git(ctx: typer.Context) -> None:
+    """Analyze Git repository history to map developer expertise and learn project patterns."""
+    from zero.cli.commands.git_mapper import run_git_mapper
+    run_git_mapper(ctx)

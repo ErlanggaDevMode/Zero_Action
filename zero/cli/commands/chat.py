@@ -150,6 +150,12 @@ def show_repl_help(console: Console) -> None:
     table.add_row("/docker", "Docker Auto-Pilot: generate container configs, run, and self-heal start logs")
     table.add_row("/voice", "Voice Mode REPL Chat: record mic audio, transcribe, and run completions")
     table.add_row("/crawl <URL>", "Crawl documentation webpage recursively and import to knowledge base")
+    table.add_row("/docmaker", "Scan project endpoints and generate markdown API documentation")
+    table.add_row("/testgen <file>", "Automatically analyze a file and generate robust unit tests with pytest")
+    table.add_row("/dashboard", "Launch the interactive Terminal User Interface (TUI) Dashboard")
+    table.add_row("/benchmark [--model MODEL]", "Benchmark the latency, throughput, and cost of the active AI model")
+    table.add_row("/mock [--port PORT] [stop]", "Scan project endpoints and spin up a mock API server in background")
+    table.add_row("/release [--version VERSION]", "Analyze git history and generate release notes & CHANGELOG.md")
     table.add_row("/exit / /quit", "Quit the interactive loop")
 
     console.print(table)
@@ -693,6 +699,46 @@ def handle_slash_command(
                     console.print("[red]File not found or empty path. Voice mode aborted.[/red]")
             except Exception as e:
                 console.print(f"[bold red]Voice Mode error:[/bold red] {e}")
+
+        elif cmd == "/docmaker":
+            from zero.cli.commands.doc_gen import doc_gen as run_doc_gen
+            run_doc_gen(ctx)
+
+        elif cmd == "/testgen":
+            from zero.cli.commands.test_gen import run_test_gen
+            opts, reqs = parse_slash_args(cmd_args)
+            file_val = Path(opts["file"]) if "file" in opts else (Path(reqs.split()[0]) if reqs else None)
+            if not file_val:
+                console.print("[bold red]Error:[/bold red] Please specify the target file (e.g. /testgen my_file.py).")
+            else:
+                run_test_gen(ctx, file=file_val)
+
+        elif cmd == "/dashboard":
+            from zero.cli.commands.dashboard import dashboard as run_dashboard
+            run_dashboard(ctx)
+
+        elif cmd == "/benchmark":
+            from zero.cli.commands.benchmark import run_benchmark, DEFAULT_BENCHMARK_PROMPT
+            opts, reqs = parse_slash_args(cmd_args)
+            model_val = opts.get("model")
+            prompt_val = reqs if reqs else DEFAULT_BENCHMARK_PROMPT
+            run_benchmark(ctx, model=model_val, prompt=prompt_val)
+
+        elif cmd == "/mock":
+            from zero.cli.commands.mock_server import mock_server
+            opts, reqs = parse_slash_args(cmd_args)
+            try:
+                port_val = int(opts.get("port") or 8000)
+            except ValueError:
+                port_val = 8000
+            stop_val = "stop" in reqs.lower() or "stop" in opts
+            mock_server(ctx, port=port_val, background=True, stop=stop_val)
+
+        elif cmd == "/release":
+            from zero.cli.commands.release import generate_release_notes
+            opts, reqs = parse_slash_args(cmd_args)
+            version_val = opts.get("version") or (reqs if reqs else None)
+            generate_release_notes(ctx, version=version_val)
 
         else:
             console.print(
