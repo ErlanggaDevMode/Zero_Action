@@ -13,3 +13,4 @@ class OpenCodeZenProvider(LiteLLMProvider):
             base_url=config.base_url,
             model=config.model,
         )
+        self.is_custom_compatible = True

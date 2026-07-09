@@ -91,7 +91,7 @@ def test_new_provider_chat_calls(mock_completion, temp_zero_dir) -> None:
     res = opencode_zen.chat(messages)
     assert res == "New Provider Response"
     mock_completion.assert_called_with(
-        model="deepseek-coder",
+        model="openai/deepseek-coder",
         messages=messages,
         api_key=None,
         api_base="https://opencode.ai/zen/v1"

@@ -146,6 +146,8 @@ class LiteLLMProvider(BaseProvider):
         """Perform a synchronous completions request."""
         try:
             model_name = kwargs.pop("model", self.model)
+            if getattr(self, "is_custom_compatible", False) and self.base_url and "/" not in model_name:
+                model_name = f"openai/{model_name}"
             modified_messages = self._prepare_caching_params(messages, kwargs)
             response = litellm.completion(
                 model=model_name,
@@ -171,6 +173,8 @@ class LiteLLMProvider(BaseProvider):
         """Perform an asynchronous streaming completions request."""
         try:
             model_name = kwargs.pop("model", self.model)
+            if getattr(self, "is_custom_compatible", False) and self.base_url and "/" not in model_name:
+                model_name = f"openai/{model_name}"
             modified_messages = self._prepare_caching_params(messages, kwargs)
             response = await litellm.acompletion(
                 model=model_name,
@@ -203,6 +207,9 @@ class LiteLLMProvider(BaseProvider):
                 return item.get("embedding", [])
             return getattr(item, "embedding", [])
         except Exception as e:
+            err_str = str(e)
+            if "<html" in err_str.lower() or "<!doctype" in err_str.lower():
+                raise Exception("LiteLLM embedding error: Endpoint returned HTML (Not Found).")
             raise Exception(f"LiteLLM embedding error: {e}")
 
     def health_check(self) -> bool:
