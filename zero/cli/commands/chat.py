@@ -709,6 +709,62 @@ def handle_slash_command(
     return False
 
 
+def setup_readline_completer(settings: Any) -> bool:
+    """Configure terminal autocomplete for slash commands, active providers, and model mappings."""
+    try:
+        import readline
+    except ImportError:
+        try:
+            import pyreadline3 as readline  # type: ignore[import-not-found]
+        except ImportError:
+            readline = None
+
+    if not readline:
+        return False
+
+    commands = [
+        "/help", "/clear", "/init", "/setup", "/provider", "/switch",
+        "/plan", "/architect", "/code", "/review", "/fix", "/memory",
+        "/test", "/pr", "/config", "/tokens", "/schema", "/refactor",
+        "/docker", "/voice", "/crawl", "/exit", "/quit"
+    ]
+
+    from zero.providers.registry import PROVIDER_CLASSES
+    providers = list(PROVIDER_CLASSES.keys())
+
+    def completer(text: str, state: int) -> Optional[str]:
+        buffer = readline.get_line_buffer()
+        words = buffer.split()
+        
+        if not buffer or buffer.startswith("/"):
+            if len(words) <= 1:
+                matches = [c for c in commands if c.startswith(text)]
+                return matches[state] if state < len(matches) else None
+                
+            if words[0] == "/switch":
+                if len(words) == 2 and not buffer.endswith(" "):
+                    matches = [p for p in providers if p.startswith(text)]
+                    return matches[state] if state < len(matches) else None
+                elif len(words) >= 2:
+                    provider_name = words[1].lower()
+                    if provider_name in providers:
+                        provider_settings = getattr(settings.provider, provider_name, None)
+                        if provider_settings and getattr(provider_settings, "model", None):
+                            model_name = provider_settings.model
+                            if model_name.startswith(text):
+                                return model_name if state == 0 else None
+        return None
+
+    readline.set_completer(completer)
+    doc_str = getattr(readline, "__doc__", "") or ""
+    file_str = getattr(readline, "__file__", "") or ""
+    if "libedit" in doc_str or "libedit" in file_str:
+        readline.parse_and_bind("bind ^I rl_complete")
+    else:
+        readline.parse_and_bind("tab: complete")
+    return True
+
+
 def chat(ctx: typer.Context) -> None:
     """Start an interactive chat session with context and memory tracking."""
     console = Console()
@@ -739,6 +795,8 @@ def chat(ctx: typer.Context) -> None:
         console.print(f"[bold red]Error:[/bold red] Could not initialize session memory: {e}")
         raise typer.Exit(code=1)
 
+    has_readline = setup_readline_completer(settings)
+
     active_provider = settings.provider.active_provider or "none"
     provider_defaults = getattr(settings.provider, active_provider) if active_provider != "none" else None
     active_model = provider_defaults.model if provider_defaults else "none"
@@ -751,6 +809,12 @@ def chat(ctx: typer.Context) -> None:
         expand=False,
     )
     console.print(welcome_panel)
+    if not has_readline:
+        import sys
+        if sys.platform == "win32":
+            console.print("[dim yellow]💡 Tip: Run 'pip install pyreadline3' to enable TAB completion for commands and providers.[/dim yellow]\n")
+        else:
+            console.print("[dim yellow]💡 Tip: Make sure standard 'readline' module is available for TAB completion.[/dim yellow]\n")
 
     try:
         from zero.cli.commands.logo_data import LOGO_MARKUP
