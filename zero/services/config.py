@@ -117,6 +117,13 @@ class OpenCodeProviderConfig(BaseModel):
     model: str = "codellama/CodeLlama-34b-Instruct-hf"
 
 
+class OpenCodeZenProviderConfig(BaseModel):
+    """OpenCode Zen API connection settings."""
+    api_key: Optional[str] = None
+    base_url: str = "https://opencode.ai/zen/v1"
+    model: str = "deepseek-coder"
+
+
 # ==========================================
 # Consolidated Schema Models
 # ==========================================
@@ -147,6 +154,7 @@ class ProviderConfig(BaseModel):
     bedrock: BedrockProviderConfig = Field(default_factory=BedrockProviderConfig)
     vertex: VertexProviderConfig = Field(default_factory=VertexProviderConfig)
     opencode: OpenCodeProviderConfig = Field(default_factory=OpenCodeProviderConfig)
+    opencode_zen: OpenCodeZenProviderConfig = Field(default_factory=OpenCodeZenProviderConfig)
 
 
 class GlobalSettings(BaseModel):

@@ -7,6 +7,7 @@ from zero.providers.alibaba import AlibabaProvider
 from zero.providers.bedrock import BedrockProvider
 from zero.providers.vertex import VertexProvider
 from zero.providers.opencode import OpenCodeProvider
+from zero.providers.opencode_zen import OpenCodeZenProvider
 from zero.services.config import load_config
 
 
@@ -45,6 +46,12 @@ def test_provider_manager_resolves_new_providers(temp_zero_dir) -> None:
     assert isinstance(opencode, OpenCodeProvider)
     assert opencode.model == "codellama/CodeLlama-34b-Instruct-hf"
 
+    # OpenCode Zen
+    config.provider.active_provider = "opencode_zen"
+    opencode_zen = manager.get_provider()
+    assert isinstance(opencode_zen, OpenCodeZenProvider)
+    assert opencode_zen.model == "deepseek-coder"
+
 
 @patch("litellm.completion")
 def test_new_provider_chat_calls(mock_completion, temp_zero_dir) -> None:
@@ -77,4 +84,15 @@ def test_new_provider_chat_calls(mock_completion, temp_zero_dir) -> None:
         messages=messages,
         api_key=None,
         api_base="https://dashscope.aliyuncs.com/compatible-mode/v1"
+    )
+
+    # OpenCode Zen test
+    opencode_zen = manager.get_provider("opencode_zen")
+    res = opencode_zen.chat(messages)
+    assert res == "New Provider Response"
+    mock_completion.assert_called_with(
+        model="deepseek-coder",
+        messages=messages,
+        api_key=None,
+        api_base="https://opencode.ai/zen/v1"
     )

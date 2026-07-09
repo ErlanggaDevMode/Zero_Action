@@ -17,6 +17,7 @@ from zero.providers.alibaba import AlibabaProvider
 from zero.providers.bedrock import BedrockProvider
 from zero.providers.vertex import VertexProvider
 from zero.providers.opencode import OpenCodeProvider
+from zero.providers.opencode_zen import OpenCodeZenProvider
 
 PROVIDER_CLASSES: Dict[str, Type[BaseProvider]] = {
     "openai": OpenAIProvider,
@@ -34,4 +35,5 @@ PROVIDER_CLASSES: Dict[str, Type[BaseProvider]] = {
     "bedrock": BedrockProvider,
     "vertex": VertexProvider,
     "opencode": OpenCodeProvider,
+    "opencode_zen": OpenCodeZenProvider,
 }
