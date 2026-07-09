@@ -96,17 +96,19 @@ class BaseProvider(ABC):
 class LiteLLMProvider(BaseProvider):
     """Base class for LiteLLM-backed AI Providers, implementing default logic."""
 
-    def __init__(self, api_key: Optional[str], base_url: Optional[str], model: str) -> None:
+    def __init__(self, api_key: Optional[str], base_url: Optional[str], model: str, provider_name: Optional[str] = None) -> None:
         """Initialize LiteLLM provider.
 
         Args:
             api_key: The API Key for authorization.
             base_url: The base URL endpoint.
             model: The default model identifier.
+            provider_name: Optional canonical name of the cloud provider.
         """
         self.api_key = api_key
         self.base_url = base_url
         self.model = model
+        self.provider_name = provider_name
 
     def connect(self) -> bool:
         """Initialize the connection to the provider.
@@ -149,8 +151,11 @@ class LiteLLMProvider(BaseProvider):
         """Perform a synchronous completions request."""
         try:
             model_name = kwargs.pop("model", self.model)
-            if getattr(self, "is_custom_compatible", False) and self.base_url and "/" not in model_name:
-                model_name = f"openai/{model_name}"
+            if "/" not in model_name:
+                if getattr(self, "is_custom_compatible", False) and self.base_url:
+                    model_name = f"openai/{model_name}"
+                elif getattr(self, "provider_name", None) and self.provider_name != "openai":
+                    model_name = f"{self.provider_name}/{model_name}"
             modified_messages = self._prepare_caching_params(messages, kwargs)
             response = litellm.completion(
                 model=model_name,
@@ -176,8 +181,11 @@ class LiteLLMProvider(BaseProvider):
         """Perform an asynchronous streaming completions request."""
         try:
             model_name = kwargs.pop("model", self.model)
-            if getattr(self, "is_custom_compatible", False) and self.base_url and "/" not in model_name:
-                model_name = f"openai/{model_name}"
+            if "/" not in model_name:
+                if getattr(self, "is_custom_compatible", False) and self.base_url:
+                    model_name = f"openai/{model_name}"
+                elif getattr(self, "provider_name", None) and self.provider_name != "openai":
+                    model_name = f"{self.provider_name}/{model_name}"
             modified_messages = self._prepare_caching_params(messages, kwargs)
             response = await litellm.acompletion(
                 model=model_name,

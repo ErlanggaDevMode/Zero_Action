@@ -12,4 +12,5 @@ class GroqProvider(LiteLLMProvider):
             api_key=config.api_key,
             base_url=config.base_url,
             model=config.model,
+            provider_name="groq",
         )

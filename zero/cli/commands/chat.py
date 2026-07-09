@@ -1,10 +1,11 @@
 """CLI subcommand for interactive terminal conversation loops with memory tracking."""
 
 import asyncio
+import os
 import shlex
 import uuid
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 import typer
 
 
@@ -709,63 +710,72 @@ def handle_slash_command(
     return False
 
 
-def setup_readline_completer(settings: Any) -> bool:
-    """Configure terminal autocomplete for slash commands, active providers, and model mappings."""
-    rl: Any = None
-    try:
-        import readline
-        rl = readline
-    except ImportError:
-        try:
-            import pyreadline3 as pyrl  # type: ignore[import-not-found]
-            rl = pyrl
-        except ImportError:
-            pass
+try:
+    from prompt_toolkit.completion import Completer, Completion
+    from prompt_toolkit.document import Document
+    from prompt_toolkit.styles import Style
+    from prompt_toolkit import PromptSession
+    from prompt_toolkit.formatted_text import HTML
+    HAS_PROMPT_TOOLKIT = True
+except ImportError:
+    class Completer:  # type: ignore[no-redef]
+        pass
+    class Document:  # type: ignore[no-redef]
+        pass
+    Completion = None  # type: ignore[assignment,misc]
+    Style = None  # type: ignore[assignment,misc]
+    PromptSession = None  # type: ignore[assignment,misc]
+    HTML = None  # type: ignore[assignment,misc]
+    HAS_PROMPT_TOOLKIT = False
 
-    if not rl:
-        return False
 
-    commands = [
-        "/help", "/clear", "/init", "/setup", "/provider", "/switch",
-        "/plan", "/architect", "/code", "/review", "/fix", "/memory",
-        "/test", "/pr", "/config", "/tokens", "/schema", "/refactor",
-        "/docker", "/voice", "/crawl", "/exit", "/quit"
-    ]
+class ZeroChatCompleter(Completer):
+    """Dropdown autocompleter displaying description metadata for zero slash commands."""
 
-    from zero.providers.registry import PROVIDER_CLASSES
-    providers = list(PROVIDER_CLASSES.keys())
+    def __init__(self, commands_with_meta: Dict[str, str], providers: List[str], settings: Any) -> None:
+        self.commands_with_meta = commands_with_meta
+        self.providers = providers
+        self.settings = settings
 
-    def completer(text: str, state: int) -> Optional[str]:
-        buffer = rl.get_line_buffer()
-        words = buffer.split()
+    def get_completions(self, document: Document, complete_event: Any):
+        text = document.text_before_cursor
+        words = text.split()
         
-        if not buffer or buffer.startswith("/"):
-            if len(words) <= 1:
-                matches = [c for c in commands if c.startswith(text)]
-                return matches[state] if state < len(matches) else None
-                
-            if words[0] == "/switch":
-                if len(words) == 2 and not buffer.endswith(" "):
-                    matches = [p for p in providers if p.startswith(text)]
-                    return matches[state] if state < len(matches) else None
-                elif len(words) >= 2:
-                    provider_name = words[1].lower()
-                    if provider_name in providers:
-                        provider_settings = getattr(settings.provider, provider_name, None)
-                        if provider_settings and getattr(provider_settings, "model", None):
-                            model_name = provider_settings.model
-                            if model_name.startswith(text):
-                                return model_name if state == 0 else None
-        return None
+        if text.startswith("/"):
+            if len(words) == 0 or (len(words) == 1 and not text.endswith(" ")):
+                target = words[0] if words else "/"
+                for cmd, desc in self.commands_with_meta.items():
+                    if cmd.startswith(target):
+                        yield Completion(
+                            cmd,
+                            start_position=-len(target),
+                            display=cmd,
+                            display_meta=desc
+                        )
+                return
 
-    rl.set_completer(completer)
-    doc_str = getattr(rl, "__doc__", "") or ""
-    file_str = getattr(rl, "__file__", "") or ""
-    if "libedit" in doc_str or "libedit" in file_str:
-        rl.parse_and_bind("bind ^I rl_complete")
-    else:
-        rl.parse_and_bind("tab: complete")
-    return True
+            if words[0] == "/switch":
+                if len(words) == 2 and not text.endswith(" "):
+                    target = words[1]
+                    for p in self.providers:
+                        if p.startswith(target):
+                            yield Completion(p, start_position=-len(target))
+                elif len(words) == 2 and text.endswith(" "):
+                    provider_name = words[1].lower()
+                    if provider_name in self.providers:
+                        p_settings = getattr(self.settings.provider, provider_name, None)
+                        if p_settings and getattr(p_settings, "model", None):
+                            model_name = p_settings.model
+                            yield Completion(model_name, start_position=0)
+                elif len(words) == 3 and not text.endswith(" "):
+                    provider_name = words[1].lower()
+                    target = words[2]
+                    if provider_name in self.providers:
+                        p_settings = getattr(self.settings.provider, provider_name, None)
+                        if p_settings and getattr(p_settings, "model", None):
+                            model_name = p_settings.model
+                            if model_name.startswith(target):
+                                yield Completion(model_name, start_position=-len(target))
 
 
 def chat(ctx: typer.Context) -> None:
@@ -798,8 +808,6 @@ def chat(ctx: typer.Context) -> None:
         console.print(f"[bold red]Error:[/bold red] Could not initialize session memory: {e}")
         raise typer.Exit(code=1)
 
-    has_readline = setup_readline_completer(settings)
-
     active_provider = settings.provider.active_provider or "none"
     provider_defaults = getattr(settings.provider, active_provider) if active_provider != "none" else None
     active_model = provider_defaults.model if provider_defaults else "none"
@@ -812,12 +820,6 @@ def chat(ctx: typer.Context) -> None:
         expand=False,
     )
     console.print(welcome_panel)
-    if not has_readline:
-        import sys
-        if sys.platform == "win32":
-            console.print("[dim yellow]💡 Tip: Run 'pip install pyreadline3' to enable TAB completion for commands and providers.[/dim yellow]\n")
-        else:
-            console.print("[dim yellow]💡 Tip: Make sure standard 'readline' module is available for TAB completion.[/dim yellow]\n")
 
     try:
         from zero.cli.commands.logo_data import LOGO_MARKUP
@@ -831,6 +833,62 @@ def chat(ctx: typer.Context) -> None:
     except (KeyboardInterrupt, EOFError, typer.Abort):
         console.print("\n[yellow]REPL session terminated.[/yellow]")
         raise typer.Exit()
+
+    # Build metadata map of commands for autocomplete display
+    commands_with_meta = {
+        "/help": "Show REPL help menu",
+        "/clear": "Clear the terminal screen",
+        "/init": "Scan workspace for context index",
+        "/setup": "Interactive provider config wizard",
+        "/switch": "Quick switch active AI provider & model",
+        "/provider": "Manage AI providers (list/switch/test/models)",
+        "/plan": "AI-generate Product Requirement Document (PRD)",
+        "/architect": "AI-generate Architecture design document",
+        "/code": "AI-generate project files with overwrite protection",
+        "/review": "AI-perform code security and quality reviews",
+        "/fix": "Surgically patch files with diff verification",
+        "/memory": "Manage ADR decisions and knowledge base",
+        "/test": "Run tests and trigger autonomous self-healing",
+        "/pr": "Git auto-pilot commit and Pull Request creator",
+        "/config": "Display or assign app configurations dynamically",
+        "/tokens": "View token usage and estimated API cost dashboard",
+        "/schema": "Scan workspace code structures and model/routes tree",
+        "/refactor": "Refactor code files with rollback protection",
+        "/docker": "Docker auto-pilot helper",
+        "/voice": "Mic recording and audio transcription REPL chat",
+        "/crawl": "Crawl documentation pages into knowledge base",
+        "/exit": "Quit the interactive loop",
+        "/quit": "Quit the interactive loop",
+    }
+
+    from zero.providers.registry import PROVIDER_CLASSES
+    providers = list(PROVIDER_CLASSES.keys())
+    
+    import sys
+    use_prompt_toolkit = HAS_PROMPT_TOOLKIT
+    if os.environ.get("ZERO_TESTING") == "true" or not sys.stdout.isatty():
+        use_prompt_toolkit = False
+
+    completer = None
+    completion_style = None
+    if use_prompt_toolkit:
+        completer = ZeroChatCompleter(commands_with_meta, providers, settings)
+        completion_style = Style.from_dict({
+            "completion-menu": "bg:#222222 fg:#ffffff",
+            "completion-menu.completion": "bg:#222222 fg:#ffffff",
+            "completion-menu.completion.current": "bg:#E07A5F fg:#000000 bold",  # Orange/Peach selection
+            "completion-menu.meta.completion": "bg:#222222 fg:#888888",
+            "completion-menu.meta.completion.current": "bg:#E07A5F fg:#000000",
+        })
+    
+    session: Any = None
+    if use_prompt_toolkit:
+        try:
+            session = PromptSession(completer=completer, style=completion_style)
+        except Exception:
+            use_prompt_toolkit = False
+        except Exception:
+            use_prompt_toolkit = False
 
     # Clear console screen for interactive prompt
     console.clear()
@@ -860,14 +918,25 @@ def chat(ctx: typer.Context) -> None:
             except Exception:
                 pass
 
-            # Build Claude Code styled prompt
+            # Build Claude Code styled prompt for fallback
             prompt_str = (
                 f"[bold green]zero-action[/bold green] "
                 rf"\[[cyan]{active_provider}/{active_model}[/cyan]\] "
                 f"[blue]{cwd_name}[/blue] >"
             )
 
-            user_input = Prompt.ask(prompt_str)
+            if use_prompt_toolkit and session:
+                prompt_html = (
+                    f"<green><b>zero-action</b></green> "
+                    rf"\[<cyan>{active_provider}/{active_model}</cyan>\] "
+                    f"<blue>{cwd_name}</blue> &gt; "
+                )
+                try:
+                    user_input = session.prompt(HTML(prompt_html))
+                except Exception:
+                    user_input = Prompt.ask(prompt_str)
+            else:
+                user_input = Prompt.ask(prompt_str)
         except (KeyboardInterrupt, EOFError, typer.Abort):
             console.print("\n[yellow]REPL session terminated.[/yellow]")
             break
