@@ -3,6 +3,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, AsyncGenerator, Dict, List, Optional
 import litellm
+litellm.suppress_debug_info = True
+litellm.set_verbose = False
 
 
 class BaseProvider(ABC):
