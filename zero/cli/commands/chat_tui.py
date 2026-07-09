@@ -188,9 +188,10 @@ def run_tui(
                 return
 
             # Delegate all other slash commands to the real handle_slash_command handler
-            # Use run_in_terminal to temporarily suspend the full-screen TUI,
+            # Use run_in_terminal (module-level) to temporarily suspend the full-screen TUI,
             # run the blocking Rich command, then restore the TUI automatically.
             from rich.console import Console as RichConsole
+            from prompt_toolkit.application import run_in_terminal
             from zero.cli.commands.chat import handle_slash_command
             rich_console = RichConsole()
             should_exit_ref = [False]
@@ -207,7 +208,7 @@ def run_tui(
                 except Exception as e:
                     rich_console.print(f"[bold red]Error executing {user_input}:[/bold red] {e}")
 
-            await app.run_in_terminal(_run_slash)  # type: ignore[attr-defined]
+            await run_in_terminal(_run_slash)
 
             if should_exit_ref[0]:
                 app.exit()
