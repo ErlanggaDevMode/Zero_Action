@@ -130,7 +130,7 @@ class AIService:
                         ])
                     context_lines.append("---")
             except Exception as e:
-                logger.warning(f"Failed to retrieve semantic code context: {e}")
+                logger.debug(f"Failed to retrieve semantic code context: {e}")
                 
         if context_lines:
             return base_prompt + "\n" + "\n".join(context_lines)

@@ -123,6 +123,7 @@ def show_repl_help(console: Console) -> None:
     table.add_row("/clear", "Clear the terminal screen")
     table.add_row("/init", "Scan workspace directory for repository context cache")
     table.add_row("/setup", "Interactive provider configuration wizard")
+    table.add_row("/switch <provider> [model]", "Quickly switch active AI provider & model on the fly")
     table.add_row(
         "/provider [list/switch/test/models]",
         "View, configure, or test AI providers",
@@ -416,6 +417,37 @@ def handle_slash_command(
                             console.print("[dim green](Search results injected into chat memory)[/dim green]")
                         except Exception as e:
                             logger.bind(category="cli").debug(f"Failed to inject search results to session: {e}")
+
+        elif cmd == "/switch":
+            args_parts = cmd_args.strip().split(maxsplit=1)
+            if not args_parts:
+                console.print(
+                    "[bold red]Error:[/bold red] Missing provider name. "
+                    "Usage: /switch <provider> [model]"
+                )
+            else:
+                new_provider = args_parts[0].lower()
+                from zero.providers.registry import PROVIDER_CLASSES
+                if new_provider not in PROVIDER_CLASSES:
+                    console.print(
+                        f"[bold red]Error:[/bold red] Unsupported provider '{new_provider}'. "
+                        f"Available options: {list(PROVIDER_CLASSES.keys())}"
+                    )
+                else:
+                    new_model = args_parts[1] if len(args_parts) > 1 else None
+                    ctx.obj.settings.provider.active_provider = new_provider
+                    if new_model:
+                        provider_settings = getattr(ctx.obj.settings.provider, new_provider)
+                        provider_settings.model = new_model
+                    
+                    from zero.services.config import save_config
+                    save_config(ctx.obj.settings, ctx.obj.config_dir)
+                    
+                    console.print(
+                        f"[bold green]✓ Switched active provider to [cyan]{new_provider}[/cyan]"
+                        + (f" with model [white]{new_model}[/white]" if new_model else "")
+                        + "[/bold green]"
+                    )
 
         elif cmd == "/read":
             from zero.cli.commands.search import read
@@ -752,6 +784,15 @@ def chat(ctx: typer.Context) -> None:
 
     while True:
         try:
+            # Dynamically refresh provider configuration on each loop iteration
+            active_provider = settings.provider.active_provider or "none"
+            provider_defaults = getattr(settings.provider, active_provider) if active_provider != "none" else None
+            active_model = provider_defaults.model if provider_defaults else "none"
+            try:
+                provider = ai_service.get_provider()
+            except Exception:
+                pass
+
             # Build Claude Code styled prompt
             prompt_str = (
                 f"[bold green]zero-action[/bold green] "

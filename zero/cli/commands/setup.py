@@ -36,6 +36,12 @@ def setup(ctx: typer.Context) -> None:
         "deepseek",
         "mistral",
         "compatible",
+        "nvidia",
+        "alibaba",
+        "bedrock",
+        "vertex",
+        "opencode",
+        "opencode_zen",
     ]
     
     active_default = settings.provider.active_provider or "openai"
