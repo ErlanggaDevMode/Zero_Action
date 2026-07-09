@@ -736,11 +736,41 @@ class ZeroChatCompleter(Completer):
         self.commands_with_meta = commands_with_meta
         self.providers = providers
         self.settings = settings
+        # Model pool: (model_id, display_name, provider_name, cost_status)
+        self.models_pool = [
+            ("mimo-v2.5-free", "MiMo V2.5 Free", "OpenCode Zen", "Free"),
+            ("nemotron-3-ultra-free", "Nemotron 3 Ultra Free", "OpenCode Zen", "Free"),
+            ("deepseek-v4-flash-free", "DeepSeek V4 Flash Free", "OpenCode Zen", "Free"),
+            ("north-mini-code-free", "North Mini Code Free", "OpenCode Zen", "Free"),
+            ("gpt-4o", "GPT-4o", "OpenAI", "Paid"),
+            ("claude-3-5-sonnet-20241022", "Claude 3.5 Sonnet", "Anthropic", "Paid"),
+            ("gemini-1.5-pro", "Gemini 1.5 Pro", "Gemini", "Paid"),
+            ("openrouter/meta-llama/llama-3.3-70b-instruct", "Llama 3.3 70B", "OpenRouter", "Paid"),
+        ]
 
     def get_completions(self, document: Document, complete_event: Any):
         text = document.text_before_cursor
         words = text.split()
         
+        # Check if they are typing switch command models list
+        if text.startswith("/switch"):
+            query = text.replace("/switch", "").strip().lower()
+            for model_id, model_name, provider_name, status in self.models_pool:
+                provider_key = provider_name.lower().replace(" ", "_")
+                replacement = f"/switch {provider_key} {model_id}"
+                
+                # Format to fixed columns matching user mockup
+                display_str = f"{model_name:<30} {provider_name:<20} {status:>10}"
+                
+                # Show all if empty query, or match search term against display strings
+                if not query or query in model_name.lower() or query in provider_name.lower() or query in status.lower() or query in model_id.lower():
+                    yield Completion(
+                        replacement,
+                        start_position=-len(text),
+                        display=display_str
+                    )
+            return
+
         if text.startswith("/"):
             if len(words) == 0 or (len(words) == 1 and not text.endswith(" ")):
                 target = words[0] if words else "/"
@@ -753,29 +783,6 @@ class ZeroChatCompleter(Completer):
                             display_meta=desc
                         )
                 return
-
-            if words[0] == "/switch":
-                if len(words) == 2 and not text.endswith(" "):
-                    target = words[1]
-                    for p in self.providers:
-                        if p.startswith(target):
-                            yield Completion(p, start_position=-len(target))
-                elif len(words) == 2 and text.endswith(" "):
-                    provider_name = words[1].lower()
-                    if provider_name in self.providers:
-                        p_settings = getattr(self.settings.provider, provider_name, None)
-                        if p_settings and getattr(p_settings, "model", None):
-                            model_name = p_settings.model
-                            yield Completion(model_name, start_position=0)
-                elif len(words) == 3 and not text.endswith(" "):
-                    provider_name = words[1].lower()
-                    target = words[2]
-                    if provider_name in self.providers:
-                        p_settings = getattr(self.settings.provider, provider_name, None)
-                        if p_settings and getattr(p_settings, "model", None):
-                            model_name = p_settings.model
-                            if model_name.startswith(target):
-                                yield Completion(model_name, start_position=-len(target))
 
 
 def chat(ctx: typer.Context) -> None:
