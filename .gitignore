@@ -94,6 +94,7 @@ logs/
 
 # Temporary scrap files
 *.html
+what_next.txt
 
 
 docs/*

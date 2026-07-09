@@ -85,11 +85,11 @@ Berkas ini mendokumentasikan rekomendasi fitur tingkat lanjut (advanced features
 - **Cara Kerja:** Mengaitkan tool `coverage.py` ke AI coder untuk menggenerasi skenario pengujian assert secara lengkap.
 
 ### 16. API Documentation Generator (`zero doc gen`)
-- **Deskripsi:** Menghasilkan dokumentasi OpenAPI (Swagger) Markdown, Postman Collection, atau berkas referensi API secara otomatis langsung dari kode router FastAPI/Flask.
+- **Deskripsi:** Menghasilkan dokumentasi OpenAPI (Swagger) Markdown, Postman Collection, atau berkas referensi API secara otomatis langsung dari kode router FastAPI/Flask. bisa di panggil di chat dengan /docmaker
 - **Cara Kerja:** AI menganalisis rute, tipe argumen fungsi, dan schema model input/output untuk merancang dokumentasi yang interaktif.
 
 ### 17. DB Migration Planner (`zero migration`)
-- **Deskripsi:** AI membandingkan model database Python saat ini dengan database aktual atau revisi migration yang sudah ada, lalu menulis skrip migrasi (Alembic DDL) secara otonom.
+- **Deskripsi:** AI membandingkan model database Python saat ini dengan database aktual atau revisi migration yang sudah ada, lalu menulis skrip migrasi (Alembic DDL) secara otonom. juga fungsi /migration di chat
 - **Cara Kerja:** AI memproses perubahan kolom, constraint, indeks baru, dan menghasilkan DDL migrasi SQL/Python yang aman.
 
 ### 18. Whiteboard Diagram & ASCII Canvas (`zero whiteboard`)
@@ -156,7 +156,7 @@ Berkas ini mendokumentasikan rekomendasi fitur tingkat lanjut (advanced features
 - **Deskripsi:** GitHub Action terintegrasi yang otomatis menjalankan perintah `zero review` pada setiap Pull Request baru dan meninggalkan ulasan baris demi baris di GitHub PR.
 
 ### 32. API Mock Server Auto-Generator (`zero mock`)
-- **Deskripsi:** AI menganalisis router API backend atau kode pemanggilan fetch frontend, kemudian membuat dan menjalankan server mock lokal lengkap dengan data tiruan secara otomatis.
+- **Deskripsi:** AI menganalisis router API backend atau kode pemanggilan fetch frontend, kemudian membuat dan menjalankan server mock lokal lengkap dengan data tiruan secara otomatis. juga dengan fungsi chat /mock
 - **Manfaat:** Mempercepat tim frontend bekerja secara paralel sebelum API backend siap sepenuhnya.
 
 ---
