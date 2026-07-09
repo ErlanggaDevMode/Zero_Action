@@ -30,6 +30,7 @@ from zero.cli.commands.billing import billing
 from zero.cli.commands.schema import schema
 from zero.cli.commands.refactor import refactor
 from zero.cli.commands.docker import docker
+from zero.cli.commands.update import update
 
 
 app = typer.Typer(
@@ -81,8 +82,6 @@ def main(
     except Exception as e:
         typer.echo(f"Unexpected Initialization Error: {e}", err=True)
         raise typer.Exit(code=1)
-
-
 # Register subcommands from commands package
 app.command("verify")(verify)
 app.command("version")(version)
@@ -103,6 +102,7 @@ app.command("billing")(billing)
 app.command("schema")(schema)
 app.command("refactor")(refactor)
 app.command("docker")(docker)
+app.command("update")(update)
 app.add_typer(config_app)
 app.add_typer(memory_app)
 app.add_typer(provider_app)
