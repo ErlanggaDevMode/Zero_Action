@@ -894,8 +894,6 @@ def chat(ctx: typer.Context) -> None:
             session = PromptSession(completer=completer, style=completion_style)
         except Exception:
             use_prompt_toolkit = False
-        except Exception:
-            use_prompt_toolkit = False
 
     # Clear console screen for interactive prompt
     console.clear()
@@ -912,6 +910,9 @@ def chat(ctx: typer.Context) -> None:
             border_style="green",
         )
     )
+
+    if not use_prompt_toolkit:
+        console.print("[dim yellow]💡 Tip: Run 'pip install prompt-toolkit' to enable premium interactive dropdown autocomplete menus for commands and models.[/dim yellow]\n")
 
 
     while True:
