@@ -239,8 +239,8 @@ def run_tui(
                     app.invalidate()
                 
                 # Calculate thought speed duration
-                duration_ms = int((time.time() - start_time) * 1000)
-                thought_block[0] = ("class:thought", f"+ Thought: {duration_ms}ms\n")
+                duration_sec = time.time() - start_time
+                thought_block[0] = ("class:thought", f"+ Thought: {duration_sec:.1f}s\n")
             else:
                 response_block[1] = ("class:error", "Error: No active AI provider connection established.\n\n")
         except Exception as e:
