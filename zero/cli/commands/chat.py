@@ -841,58 +841,20 @@ def chat(ctx: typer.Context) -> None:
         console.print("\n[yellow]REPL session terminated.[/yellow]")
         raise typer.Exit()
 
-    # Build metadata map of commands for autocomplete display
-    commands_with_meta = {
-        "/help": "Show REPL help menu",
-        "/clear": "Clear the terminal screen",
-        "/init": "Scan workspace for context index",
-        "/setup": "Interactive provider config wizard",
-        "/switch": "Quick switch active AI provider & model",
-        "/provider": "Manage AI providers (list/switch/test/models)",
-        "/plan": "AI-generate Product Requirement Document (PRD)",
-        "/architect": "AI-generate Architecture design document",
-        "/code": "AI-generate project files with overwrite protection",
-        "/review": "AI-perform code security and quality reviews",
-        "/fix": "Surgically patch files with diff verification",
-        "/memory": "Manage ADR decisions and knowledge base",
-        "/test": "Run tests and trigger autonomous self-healing",
-        "/pr": "Git auto-pilot commit and Pull Request creator",
-        "/config": "Display or assign app configurations dynamically",
-        "/tokens": "View token usage and estimated API cost dashboard",
-        "/schema": "Scan workspace code structures and model/routes tree",
-        "/refactor": "Refactor code files with rollback protection",
-        "/docker": "Docker auto-pilot helper",
-        "/voice": "Mic recording and audio transcription REPL chat",
-        "/crawl": "Crawl documentation pages into knowledge base",
-        "/exit": "Quit the interactive loop",
-        "/quit": "Quit the interactive loop",
-    }
-
-    from zero.providers.registry import PROVIDER_CLASSES
-    providers = list(PROVIDER_CLASSES.keys())
-    
     import sys
     use_prompt_toolkit = HAS_PROMPT_TOOLKIT
     if os.environ.get("ZERO_TESTING") == "true" or not sys.stdout.isatty():
         use_prompt_toolkit = False
 
-    completer = None
-    completion_style = None
-    if use_prompt_toolkit:
-        completer = ZeroChatCompleter(commands_with_meta, providers, settings)
-        completion_style = Style.from_dict({
-            "completion-menu": "bg:#222222 fg:#ffffff",
-            "completion-menu.completion": "bg:#222222 fg:#ffffff",
-            "completion-menu.completion.current": "bg:#E07A5F fg:#000000 bold",  # Orange/Peach selection
-            "completion-menu.meta.completion": "bg:#222222 fg:#888888",
-            "completion-menu.meta.completion.current": "bg:#E07A5F fg:#000000",
-        })
-    
+
     session: Any = None
     if use_prompt_toolkit:
         try:
-            session = PromptSession(completer=completer, style=completion_style)
-        except Exception:
+            from zero.cli.commands.chat_tui import run_tui
+            run_tui(ctx, settings, config_dir, ai_service, memory, session_id)
+            return
+        except Exception as e:
+            logger.bind(category="cli").error(f"Failed to initialize TUI: {e}")
             use_prompt_toolkit = False
 
     # Clear console screen for interactive prompt
