@@ -1,7 +1,6 @@
 """CLI subcommand to update Zero Action CLI to the latest version."""
 
 import subprocess
-import sys
 from pathlib import Path
 from rich.console import Console
 
@@ -60,14 +59,16 @@ def update() -> None:
             console.print(f"[dim]{install_res.stdout}[/dim]")
             console.print("\n🎉 [bold green]Zero Action CLI is up-to-date![/bold green]")
             return
-    except Exception:
-        pass
+        else:
+            console.print(f"[yellow]uv tool update failed with exit code {install_res.returncode}: {install_res.stderr.strip()}[/yellow]")
+    except Exception as e:
+        console.print(f"[yellow]uv command not found or failed to start: {e}[/yellow]")
 
-    # Fallback to pip install if uv is not available/failed
+    # Fallback to pip install if uv is not available/failed (calling global pip directly)
     try:
         console.print("[dim]Running: pip install -e .[/dim]")
         install_res = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-e", "."],
+            ["pip", "install", "-e", "."],
             cwd=str(package_root),
             capture_output=True,
             text=True
@@ -77,8 +78,8 @@ def update() -> None:
             console.print("\n🎉 [bold green]Zero Action CLI is up-to-date![/bold green]")
             return
         else:
-            console.print(f"[bold red]Reinstallation failed:[/bold red] {install_res.stderr}")
+            console.print(f"[bold red]Reinstallation failed:[/bold red] {install_res.stderr.strip()}")
     except Exception as e:
-        console.print(f"[bold red]Could not reinstall package dependencies:[/bold red] {e}")
+        console.print(f"[bold red]Could not reinstall package dependencies: {e}[/bold red]")
 
     console.print("\n[bold yellow]⚠️ Update completed with warnings. Please verify command execution manually.[/bold yellow]")
