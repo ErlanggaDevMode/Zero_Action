@@ -36,11 +36,11 @@ app = typer.Typer(
     name="zero",
     help="[bold green]Zero Action[/bold green]: AI Development Partner CLI",
     rich_markup_mode="rich",
-    no_args_is_help=True,
+    no_args_is_help=False,
 )
 
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
     debug: Optional[bool] = typer.Option(
@@ -70,6 +70,10 @@ def main(
         )
 
         logger.bind(category="cli").debug("Zero Action CLI foundation successfully initialized.")
+
+        # Route to chat subcommand by default if no subcommand is invoked
+        if ctx.invoked_subcommand is None:
+            ctx.invoke(chat, ctx=ctx)
 
     except ZeroError as e:
         typer.echo(f"Initialization Error: {e.message}", err=True)
