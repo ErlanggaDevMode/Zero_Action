@@ -15,7 +15,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.widgets import Frame, TextArea
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout.dimension import Dimension
+
 from prompt_toolkit.data_structures import Point
 
 from zero.services.billing import get_billing_summary
@@ -80,7 +80,7 @@ def run_tui(
     total_tokens = billing_summary.get("total_prompt_tokens", 0) + billing_summary.get("total_completion_tokens", 0)
     context_limit = get_context_limit(active_model)
     context_percent = min(100, int((total_tokens / context_limit) * 100))
-    session_time = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
+
 
     # Formatted chat history content
     formatted_history: List[List[tuple]] = []
@@ -186,10 +186,31 @@ def run_tui(
                 
                 app.invalidate()
                 return
-            
-            # Call standard fallback handler for other commands
-            # We print output inside history block
-            formatted_history.append([("class:system-text", f"Running command {user_input}...\n\n")])
+
+            # Delegate all other slash commands to the real handle_slash_command handler
+            # Use run_in_terminal to temporarily suspend the full-screen TUI,
+            # run the blocking Rich command, then restore the TUI automatically.
+            from rich.console import Console as RichConsole
+            from zero.cli.commands.chat import handle_slash_command
+            rich_console = RichConsole()
+            should_exit_ref = [False]
+
+            def _run_slash() -> None:
+                try:
+                    should_exit_ref[0] = handle_slash_command(
+                        user_input,
+                        ctx,
+                        rich_console,
+                        session_id=session_id,
+                        memory=memory,
+                    )
+                except Exception as e:
+                    rich_console.print(f"[bold red]Error executing {user_input}:[/bold red] {e}")
+
+            await app.run_in_terminal(_run_slash)  # type: ignore[attr-defined]
+
+            if should_exit_ref[0]:
+                app.exit()
             app.invalidate()
             return
 
@@ -337,51 +358,17 @@ def run_tui(
                 ], height=1)
             ])
             
-        # Else, show split chat screen
-        return VSplit([
-            # Chat and input panel (75% width)
-            HSplit([
-                history_window,
-                Frame(
-                    body=HSplit([
-                        input_field,
-                        Window(content=FormattedTextControl(HTML(
-                            f"<blue>Build</blue> · <b>{active_model}</b> <gray>{active_provider}</gray> · <orange>high</orange>"
-                        )), height=1)
-                    ])
-                )
-            ], width=Dimension(weight=3)),
-            
-            # Border Separator
-            Window(width=1, char="│", style="class:line"),
-            
-            # Side Info Panel (25% width)
-            HSplit([
-                Window(height=1),
-                Window(content=FormattedTextControl(HTML(
-                    f" <gray>New session - {session_time}</gray>\n"
-                )), height=2),
-                
-                Window(content=FormattedTextControl(HTML(
-                    " <b>Context</b>\n"
-                    f" <cyan>{total_tokens:,} tokens</cyan>\n"
-                    f" <gray>{context_percent}% used</gray>\n"
-                    f" <green>${total_cost:.4f} spent</green>\n"
-                )), height=5),
-                
-                Window(content=FormattedTextControl(HTML(
-                    " <b>LSP</b>\n"
-                    " <gray>LSPs are disabled</gray>\n"
-                )), height=3),
-                
-                Window(),  # Vertical Spacer
-                
-                # Bottom Status
-                VSplit([
-                    Window(content=FormattedTextControl(HTML(f" <blue>/{cwd_name}</blue>"))),
-                    Window(content=FormattedTextControl(HTML("<gray>• Zero Action 1.0.0 </gray>")), align=WindowAlign.RIGHT),
-                ], height=1)
-            ], width=Dimension(weight=1))
+        # Else, show full-width chat screen (no side panel)
+        return HSplit([
+            history_window,
+            Frame(
+                body=HSplit([
+                    input_field,
+                    Window(content=FormattedTextControl(HTML(
+                        f"<blue>Build</blue> · <b>{active_model}</b> <gray>{active_provider}</gray> · <orange>high</orange>"
+                    )), height=1)
+                ])
+            )
         ])
 
     root_container = FloatContainer(
