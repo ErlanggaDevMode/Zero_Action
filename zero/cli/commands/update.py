@@ -1,6 +1,7 @@
 """CLI subcommand to update Zero Action CLI to the latest version."""
 
 import subprocess
+import sys
 from pathlib import Path
 from rich.console import Console
 
@@ -10,6 +11,9 @@ console = Console()
 def update() -> None:
     """Update Zero Action CLI to the latest version from git and rebuild dependencies."""
     console.print("[bold cyan]🔄 Starting Zero Action Auto-Update...[/bold cyan]\n")
+
+    # Determine if we should use shell execution (required on Windows for local PATH resolution)
+    use_shell = (sys.platform == "win32")
 
     # 1. Try Git Pull
     git_dir = Path(__file__).resolve().parents[3] / ".git"
@@ -21,7 +25,8 @@ def update() -> None:
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                shell=use_shell
             )
             branch = branch_res.stdout.strip() or "main"
             
@@ -30,7 +35,8 @@ def update() -> None:
                 ["git", "pull", "origin", branch],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                shell=use_shell
             )
             console.print(f"[green]✓ Successfully pulled changes from branch '{branch}':[/green]")
             console.print(f"[dim]{pull_res.stdout}[/dim]")
@@ -52,7 +58,8 @@ def update() -> None:
             ["uv", "tool", "install", "--force", "--editable", "."],
             cwd=str(package_root),
             capture_output=True,
-            text=True
+            text=True,
+            shell=use_shell
         )
         if install_res.returncode == 0:
             console.print("[green]✓ Successfully reinstalled Zero Action global tool using uv![/green]")
@@ -71,7 +78,8 @@ def update() -> None:
             ["pip", "install", "-e", "."],
             cwd=str(package_root),
             capture_output=True,
-            text=True
+            text=True,
+            shell=use_shell
         )
         if install_res.returncode == 0:
             console.print("[green]✓ Successfully reinstalled Zero Action global tool using pip![/green]")
