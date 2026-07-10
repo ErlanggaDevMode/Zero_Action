@@ -38,6 +38,7 @@ from zero.cli.commands.benchmark import run_benchmark
 from zero.cli.commands.mock_server import mock_server
 from zero.cli.commands.release import generate_release_notes
 from zero.cli.commands.shortcut import run_shortcut
+from zero.cli.commands.devcontainer import generate_devcontainer
 
 
 app = typer.Typer(
@@ -117,6 +118,7 @@ app.command("benchmark")(run_benchmark)
 app.command("mock")(mock_server)
 app.command("release")(generate_release_notes)
 app.command("shortcut")(run_shortcut)
+app.command("devcontainer")(generate_devcontainer)
 app.add_typer(config_app)
 app.add_typer(memory_app)
 app.add_typer(provider_app)

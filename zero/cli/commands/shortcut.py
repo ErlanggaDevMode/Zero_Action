@@ -1,7 +1,7 @@
 """CLI subcommand and wizard to manage shell aliases and keyboard shortcuts for Zero Action."""
 
-import os
 import sys
+import re
 from pathlib import Path
 from typing import List, Dict, Optional
 import typer
@@ -31,7 +31,7 @@ def _get_shell_profiles() -> List[Path]:
 
 def _read_aliases_from_profile(profile_path: Path) -> Dict[str, str]:
     """Parse existing Zero Action aliases from a profile file."""
-    aliases = {}
+    aliases: Dict[str, str] = {}
     if not profile_path.exists():
         return aliases
         
@@ -62,7 +62,7 @@ def _read_aliases_from_profile(profile_path: Path) -> Dict[str, str]:
         pass
     return aliases
 
-import re
+
 
 def _write_aliases_to_profile(profile_path: Path, aliases: Dict[str, str]) -> None:
     """Write zero aliases block into the shell profile."""

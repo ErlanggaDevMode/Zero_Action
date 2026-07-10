@@ -37,7 +37,8 @@ class FallbackProviderWrapper(BaseProvider):
             # Switch active provider in settings
             self.manager.settings.provider.active_provider = next_backup
             from zero.services.config import save_config
-            config_dir = Path(os.environ.get("ZERO_CONFIG_DIR") or Path.home() / ".zero")
+            env_home = os.environ.get("ZERO_HOME") or os.environ.get("ZERO_CONFIG_DIR")
+            config_dir = Path(env_home) if env_home else Path.home() / ".zero"
             try:
                 save_config(self.manager.settings, config_dir)
             except Exception:
@@ -59,7 +60,8 @@ class FallbackProviderWrapper(BaseProvider):
             
             self.manager.settings.provider.active_provider = next_backup
             from zero.services.config import save_config
-            config_dir = Path(os.environ.get("ZERO_CONFIG_DIR") or Path.home() / ".zero")
+            env_home = os.environ.get("ZERO_HOME") or os.environ.get("ZERO_CONFIG_DIR")
+            config_dir = Path(env_home) if env_home else Path.home() / ".zero"
             try:
                 save_config(self.manager.settings, config_dir)
             except Exception:

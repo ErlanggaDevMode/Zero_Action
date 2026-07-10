@@ -1,6 +1,7 @@
 """CLI commands for managing conversation memory, ADRs, and knowledge import."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+import os
 import uuid
 from pathlib import Path
 import typer
@@ -248,3 +249,99 @@ def memory_git(ctx: typer.Context) -> None:
     """Analyze Git repository history to map developer expertise and learn project patterns."""
     from zero.cli.commands.git_mapper import run_git_mapper
     run_git_mapper(ctx)
+
+
+@memory_app.command("backup")
+def memory_backup(
+    ctx: typer.Context,
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Custom path/filename for the backup zip file"),
+) -> None:
+    """Backup active database files, configuration settings, and memory logs into a ZIP file."""
+    import zipfile
+    from rich.prompt import Confirm
+    console = Console()
+    config_dir = ctx.obj.config_dir
+    
+    if not config_dir.exists():
+        console.print(f"[bold red]Error:[/bold red] Configuration directory '{config_dir}' does not exist.")
+        raise typer.Exit(code=1)
+        
+    backup_file = Path(output) if output else Path.cwd() / "zero_memory_backup.zip"
+    
+    if backup_file.exists():
+        confirm = Confirm.ask(f"Backup file '{backup_file.name}' already exists. Overwrite?", default=True)
+        if not confirm:
+            console.print("[yellow]Backup cancelled.[/yellow]")
+            return
+            
+    console.print(f"[yellow]Backing up config directory: {config_dir} -> {backup_file}...[/yellow]")
+    
+    try:
+        with zipfile.ZipFile(backup_file, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(config_dir):
+                # Skip temp folders
+                if "_temp_extract" in root:
+                    continue
+                for file in files:
+                    file_path = Path(root) / file
+                    if file.endswith((".db", ".toml", ".json", ".txt")):
+                        rel_path = file_path.relative_to(config_dir)
+                        zipf.write(file_path, rel_path)
+                        console.print(f"  [green]✓[/green] Added {rel_path}")
+                        
+        console.print(f"[bold green]✓ Successfully created backup at: [white]{backup_file.resolve()}[/white][/bold green]")
+    except Exception as e:
+        console.print(f"[bold red]Backup failed:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+
+@memory_app.command("restore")
+def memory_restore(
+    ctx: typer.Context,
+    backup_path: Path = typer.Argument(..., help="Path to the backup ZIP file"),
+) -> None:
+    """Restore database files, configuration settings, and memory logs from a ZIP backup."""
+    import zipfile
+    import shutil
+    from rich.prompt import Confirm
+    console = Console()
+    config_dir = ctx.obj.config_dir
+    
+    if not backup_path.exists():
+        console.print(f"[bold red]Error:[/bold red] Backup file '{backup_path}' not found.")
+        raise typer.Exit(code=1)
+        
+    confirm = Confirm.ask("[bold red]WARNING: Restoring will overwrite existing settings and databases. Continue?[/bold red]", default=False)
+    if not confirm:
+        console.print("[yellow]Restore cancelled.[/yellow]")
+        return
+        
+    console.print(f"[yellow]Restoring backup {backup_path} to {config_dir}...[/yellow]")
+    
+    # Create temp directory to unzip first, for safety
+    temp_extract = config_dir / "_temp_extract"
+    if temp_extract.exists():
+        shutil.rmtree(temp_extract)
+    temp_extract.mkdir(parents=True, exist_ok=True)
+    
+    try:
+        with zipfile.ZipFile(backup_path, "r") as zipf:
+            zipf.extractall(temp_extract)
+            
+        # Copy files to config_dir, overwriting
+        for item in temp_extract.rglob("*"):
+            if item.is_file():
+                rel_path = item.relative_to(temp_extract)
+                dest = config_dir / rel_path
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(item, dest)
+                console.print(f"  [green]✓[/green] Restored {rel_path}")
+                
+        console.print("[bold green]✓ Successfully restored memory databases and configuration settings.[/bold green]")
+    except Exception as e:
+        console.print(f"[bold red]Restore failed:[/bold red] {e}")
+        raise typer.Exit(code=1)
+    finally:
+        if temp_extract.exists():
+            shutil.rmtree(temp_extract)
+

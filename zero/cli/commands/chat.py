@@ -138,11 +138,11 @@ def show_repl_help(console: Console) -> None:
     )
     table.add_row("/fix [file] [error/instruction]", "Surgically patch files with diff verification")
     table.add_row(
-        "/memory [subcommand]",
-        "Manage saved conversations, ADR decisions, and knowledge base",
+        "/memory [backup/restore/search/...]",
+        "Manage chats, decisions, knowledge base, or backup/restore SQLite vector indexes",
     )
     table.add_row("/test [command]", "Run tests or checks and trigger autonomous self-healing")
-    table.add_row("/pr", "Automate Git conventional commits, pushing, and Pull Requests")
+    table.add_row("/pr [--prune]", "Automate Git commits/PRs, or clean merged local branches with --prune")
     table.add_row("/config [show/set]", "Display or assign app configurations dynamically")
     table.add_row("/tokens", "View summarized token usage and estimated API cost dashboard")
     table.add_row("/schema", "Scan workspace code structure and display DB models & REST routes tree")
@@ -156,6 +156,9 @@ def show_repl_help(console: Console) -> None:
     table.add_row("/benchmark [--model MODEL]", "Benchmark the latency, throughput, and cost of the active AI model")
     table.add_row("/mock [--port PORT] [stop]", "Scan project endpoints and spin up a mock API server in background")
     table.add_row("/release [--version VERSION]", "Analyze git history and generate release notes & CHANGELOG.md")
+    table.add_row("/shortcut [add/remove/list]", "Manage shell aliases and shortcuts (e.g. zask for zero ask)")
+    table.add_row("/devcontainer", "Detect project tech stack and generate VS Code dev container files")
+    table.add_row("/verify", "Run all self-verification checks (pytest, ruff, mypy) autonomously")
     table.add_row("/exit / /quit", "Quit the interactive loop")
 
     console.print(table)
@@ -204,6 +207,8 @@ def handle_memory_command(parts: list[str], cmd_args: str, ctx: typer.Context, c
         list_decisions,
         import_knowledge,
         search as memory_search,
+        memory_backup,
+        memory_restore,
     )
     if len(parts) < 2:
         console.print("[bold red]Error:[/bold red] Missing memory subcommand (e.g. /memory list-decisions).")
@@ -225,6 +230,11 @@ def handle_memory_command(parts: list[str], cmd_args: str, ctx: typer.Context, c
     elif sub == "search" and len(parts) > 2:
         query_val = " ".join(parts[2:])
         memory_search(ctx, query_val)
+    elif sub == "backup":
+        output_val = parts[2] if len(parts) > 2 else None
+        memory_backup(ctx, output=output_val)
+    elif sub == "restore" and len(parts) > 2:
+        memory_restore(ctx, Path(parts[2]))
     else:
         console.print(f"[bold red]Error:[/bold red] Unknown memory subcommand: '{sub}'.")
 
@@ -377,7 +387,8 @@ def handle_slash_command(
             body_val = opts.get("body")
             yes_val = opts.get("yes") == "true"
             draft_val = opts.get("draft") == "true"
-            pr(ctx, branch=branch_val, title=title_val, body=body_val, yes=yes_val, push=True, draft=draft_val)
+            prune_val = opts.get("prune") == "true" or "prune" in reqs.lower()
+            pr(ctx, branch=branch_val, title=title_val, body=body_val, yes=yes_val, push=True, draft=draft_val, prune=prune_val)
 
         elif cmd == "/refactor":
             from zero.cli.commands.refactor import refactor as run_refactor
@@ -739,6 +750,49 @@ def handle_slash_command(
             opts, reqs = parse_slash_args(cmd_args)
             version_val = opts.get("version") or (reqs if reqs else None)
             generate_release_notes(ctx, version=version_val)
+
+        elif cmd == "/shortcut":
+            from zero.cli.commands.shortcut import run_shortcut
+            opts, reqs = parse_slash_args(cmd_args)
+            action_val = reqs.split()[0] if reqs else "list"
+            name_val = opts.get("name")
+            command_val = opts.get("command")
+            run_shortcut(ctx, action=action_val, name=name_val, command=command_val)
+
+        elif cmd == "/devcontainer":
+            from zero.cli.commands.devcontainer import generate_devcontainer
+            generate_devcontainer(ctx)
+
+        elif cmd == "/verify":
+            console.print("[yellow]Running autonomous self-verification checks...[/yellow]\n")
+            import subprocess
+            
+            # 1. Run Ruff
+            console.print("Running [bold cyan]Ruff Style Linter[/bold cyan]...")
+            ruff_res = subprocess.run(["uv", "run", "ruff", "check", "zero", "tests"], capture_output=True, text=True)
+            ruff_ok = ruff_res.returncode == 0
+            
+            # 2. Run Mypy
+            console.print("Running [bold cyan]Mypy Static Type Checker[/bold cyan]...")
+            mypy_res = subprocess.run(["uv", "run", "mypy", "zero", "tests", "--ignore-missing-imports"], capture_output=True, text=True)
+            mypy_ok = mypy_res.returncode == 0
+            
+            # 3. Run Pytest
+            console.print("Running [bold cyan]Pytest Unit Test Suite[/bold cyan]...")
+            pytest_res = subprocess.run(["uv", "run", "pytest"], capture_output=True, text=True)
+            pytest_ok = pytest_res.returncode == 0
+            
+            # Output Results Table
+            table = Table(title="[bold green]Workspace Verification Results[/bold green]", show_header=True, header_style="bold cyan")
+            table.add_column("Check", style="bold white")
+            table.add_column("Status", style="bold")
+            table.add_column("Details", style="dim")
+            
+            table.add_row("Ruff Style & Formatting", "[green]PASS[/green]" if ruff_ok else "[red]FAIL[/red]", "Clean" if ruff_ok else ruff_res.stdout.splitlines()[0] if ruff_res.stdout else "Issues found")
+            table.add_row("Mypy Type Safety", "[green]PASS[/green]" if mypy_ok else "[red]FAIL[/red]", "Type safe" if mypy_ok else mypy_res.stdout.splitlines()[-1] if mypy_res.stdout else "Issues found")
+            table.add_row("Pytest Suite", "[green]PASS[/green]" if pytest_ok else "[red]FAIL[/red]", "All tests passed" if pytest_ok else "Some tests failed")
+            
+            console.print(table)
 
         else:
             console.print(

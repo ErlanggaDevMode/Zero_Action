@@ -85,6 +85,7 @@ def review(
         help="Comma-separated focus areas: security,performance,maintainability,scalability,readability",
     ),
     model: Optional[str] = typer.Option(None, "--model", "-m", help="AI model override to delegate specific task execution"),
+    vision: bool = typer.Option(False, "--vision", "-v", help="Perform a visual UI/UX review of an image mockup"),
 ) -> None:
     """Perform an AI-powered code review on a file or directory of source files."""
     from zero.services.ai import AIService
@@ -105,6 +106,70 @@ def review(
     except Exception as e:
         console.print(f"[bold red]Error resolving AI provider:[/bold red] {e}")
         raise typer.Exit(code=1)
+
+    if vision:
+        if not file:
+            console.print("[bold red]Error:[/bold red] Please specify an image file to review (e.g. zero review --vision -f mockup.png).")
+            raise typer.Exit(code=1)
+        if not file.exists():
+            console.print(f"[bold red]Error:[/bold red] File '{file}' not found.")
+            raise typer.Exit(code=1)
+            
+        import base64
+        ext = file.suffix.lower()
+        if ext not in (".png", ".jpg", ".jpeg", ".webp"):
+            console.print(f"[bold red]Error:[/bold red] File '{file}' is not a supported image format (.png, .jpg, .jpeg, .webp).")
+            raise typer.Exit(code=1)
+            
+        try:
+            image_data = file.read_bytes()
+            mime_type = f"image/{ext[1:]}" if ext != ".jpg" else "image/jpeg"
+            base64_image = base64.b64encode(image_data).decode("utf-8")
+        except Exception as e:
+            console.print(f"[bold red]Error reading image file:[/bold red] {e}")
+            raise typer.Exit(code=1)
+            
+        console.print(f"\n[bold green]Zero Action Visual UI/UX Reviewer[/bold green] [dim]({provider.model})[/dim]")
+        console.print(f"Reviewing image [dim]{file}[/dim]...\n")
+        
+        system_prompt = (
+            "You are an expert UI/UX design auditor and frontend engineer. "
+            "Analyze the layout, alignment, colors, typography, contrast, accessibility, and responsiveness of this UI mockup. "
+            "Generate a professional, structured markdown review report and suggest corresponding CSS/HTML fixes or improvements."
+        )
+        user_content = [
+            {"type": "text", "text": "Please perform a visual UI/UX design audit on this mockup image."},
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{mime_type};base64,{base64_image}"
+                }
+            }
+        ]
+        vision_messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content}
+        ]
+        
+        target_model = model or provider.model
+        try:
+            kwargs = {}
+            if target_model:
+                kwargs["model"] = target_model
+            review_text = asyncio.run(stream_completion_with_timer(provider, vision_messages, console, **kwargs))
+        except Exception as e:
+            console.print(f"\n[bold red]API Completion Error:[/bold red] {e}")
+            raise typer.Exit(code=1)
+            
+        if output:
+            try:
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text(review_text, encoding="utf-8")
+                console.print(Panel(f"[bold green]✓ Visual Review Complete![/bold green]\nReport saved to: [white]{output.resolve()}[/white]"))
+            except Exception as e:
+                console.print(f"[bold red]Error saving review report:[/bold red] {e}")
+                raise typer.Exit(code=1)
+        return
 
     # -- Focus area validation ------------------------------------------------
     requested_areas = [a.strip().lower() for a in focus.split(",") if a.strip()]

@@ -1,6 +1,5 @@
 """CLI subcommand to automatically parse git logs and generate CHANGELOG updates and release notes."""
 
-import os
 from pathlib import Path
 from typing import Optional
 import typer

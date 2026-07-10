@@ -134,6 +134,9 @@ def run_tui(
         "/benchmark": "Benchmark active AI model performance & cost",
         "/mock": "Scan project endpoints and spin up a mock API server in background",
         "/release": "Analyze git commits to draft release notes and CHANGELOG.md",
+        "/shortcut": "Manage custom command aliases and shortcuts in shell profile",
+        "/devcontainer": "Detect project tech stack and generate VS Code dev container files",
+        "/verify": "Run all self-verification checks (pytest, ruff, mypy) autonomously",
         "/exit": "Quit the interactive loop",
         "/quit": "Quit the interactive loop",
     }

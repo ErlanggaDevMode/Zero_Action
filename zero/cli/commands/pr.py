@@ -68,6 +68,7 @@ def pr(
     yes: bool = typer.Option(False, "--yes", "-y", help="Auto-approve commit and branch checkout"),
     push: bool = typer.Option(True, "--push/--no-push", help="Push branch and trigger PR creation"),
     draft: bool = typer.Option(False, "--draft", help="Only generate and display the PR draft (changelog, reasons, risk mitigation) without pushing or checkout"),
+    prune: bool = typer.Option(False, "--prune", help="Clean up local branches that have been merged to main/master remote branch"),
 ) -> None:
     """Automate branch creation, conventional commit generation, pushing, and Pull Request creation."""
     from zero.services.ai import AIService
@@ -102,6 +103,68 @@ def pr(
     except (git.exc.InvalidGitRepositoryError, git.exc.NoSuchPathError):
         console.print("[bold red]Error:[/bold red] Current workspace is not a Git repository.")
         raise typer.Exit(code=1)
+
+    if prune:
+        console.print("[yellow]Scanning for merged local branches to prune...[/yellow]")
+        try:
+            # Fetch remote branches list to know what remote looks like
+            try:
+                repo.git.fetch("origin", "--prune")
+            except Exception:
+                # Fallback if fetch fails
+                pass
+
+            # Determine primary branch (main/master)
+            possible_main_branches = ["main", "master", "development", "dev"]
+            main_branch = "main"
+            for b in possible_main_branches:
+                if b in repo.heads:
+                    main_branch = b
+                    break
+
+            # Find local branches merged into main_branch
+            merged_branches_raw = repo.git.branch("--merged", main_branch).splitlines()
+            merged_branches = []
+            for b in merged_branches_raw:
+                b_name = b.strip().replace("*", "").strip()
+                # Skip protected and active branch
+                if b_name not in possible_main_branches and b_name != repo.active_branch.name:
+                    merged_branches.append(b_name)
+
+            if not merged_branches:
+                console.print("[green]✓ Workspace is clean. No merged branches to prune.[/green]")
+                return
+
+            console.print(f"[cyan]Found {len(merged_branches)} merged local branch(es) to prune:[/cyan]")
+            for b in merged_branches:
+                console.print(f"  - {b}")
+                
+            confirm = Confirm.ask("Do you want to delete these branches?", default=True) if not yes else True
+            if confirm:
+                deleted_branches = []
+                for b in merged_branches:
+                    try:
+                        repo.git.branch("-d", b)
+                        deleted_branches.append(b)
+                    except Exception as e:
+                        # Try force delete
+                        console.print(f"[dim]Failed to safely delete {b}: {e}. Trying force delete...[/dim]")
+                        try:
+                            repo.git.branch("-D", b)
+                            deleted_branches.append(b)
+                        except Exception as fe:
+                            console.print(f"[bold red]Failed to delete {b}:[/bold red] {fe}")
+                
+                if deleted_branches:
+                    console.print(f"[green]✓ Pruned {len(deleted_branches)} branch(es) successfully.[/green]")
+                else:
+                    console.print("[yellow]No branches were pruned.[/yellow]")
+            else:
+                console.print("[yellow]Pruning skipped.[/yellow]")
+        except Exception as e:
+            console.print(f"[bold red]Prune failed:[/bold red] {e}")
+            raise typer.Exit(code=1)
+        return
 
     # Detect current branch and dirty state
     is_dirty = repo.is_dirty(untracked_files=True)
